@@ -154,22 +154,46 @@ function generateWeek(){
  if(S.preferences.effort==="Easy"){let easy=pool.filter(r=>r.effort==="Easy");if(easy.length>=n)pool=easy}
  if(S.preferences.effort==="Project cooking"){let projects=pool.filter(r=>r.effort==="Project cooking"||r.effort==="Moderate");if(projects.length>=n)pool=projects}
  if(!pool.length)pool=R.slice();
- const flavorTerms={"Garlic/butter":["garlic","butter"],"Savory/umami":["soy","beef","mushroom","parmesan"],"Spicy":["spicy","cajun","chili","arrabbiata","mapo"],"Creamy/cheesy":["creamy","cream","cheese","parmesan","stroganoff"],"Tomato-based":["tomato","marinara","bolognese","shakshuka","arrabbiata"],"Curry/spiced":["curry","spiced","shawarma","cajun"],"Fresh/light":["lemon","fish","salmon","piccata","cod"],"Citrus/herbs":["lemon","lime","herb","parsley"]};
- const carbTerms={"Rice":["rice"],"Pasta":["pasta","spaghetti","stroganoff","lasagna","tortellini","risotto"],"Potatoes":["potato","shepherd","stew"],"Tortillas":["taco","fajita","enchilada","burrito","quesadilla"],"Beans":["bean","chickpea","chili"]};
- function score(r){let text=(r.name+" "+r.desc+" "+r.ingredients.map(x=>x.name).join(" ")).toLowerCase(),v=Math.random()*2;
-  for(const f of S.preferences.flavors||[])if((flavorTerms[f]||[]).some(t=>text.includes(t)))v+=1.5;
-  for(const c of S.preferences.carbs||[])if((carbTerms[c]||[]).some(t=>text.includes(t)))v+=1;
+ const flavorTerms={"Garlic/butter":["garlic","butter"],"Savory/umami":["soy","beef","mushroom","parmesan","miso"],"Spicy":["spicy","cajun","chili","arrabbiata","mapo","pepper flakes"],"Creamy/cheesy":["creamy","cream","cheese","parmesan","stroganoff"],"Tomato-based":["tomato","marinara","bolognese","shakshuka","arrabbiata"],"Curry/spiced":["curry","spiced","shawarma","cajun","cumin"],"Fresh/light":["lemon","fish","salmon","piccata","cod"],"Citrus/herbs":["lemon","lime","herb","parsley","cilantro"]};
+ const carbTerms={"Rice":["rice"],"Pasta":["pasta","spaghetti","stroganoff","lasagna","tortellini","risotto","noodle"],"Potatoes":["potato","shepherd","stew"],"Tortillas":["taco","fajita","enchilada","burrito","quesadilla"],"Beans":["bean","chickpea","lentil","chili"]};
+ const terms=r=>(r.name+" "+r.desc+" "+r.ingredients.map(x=>x.name).join(" ")).toLowerCase();
+ const flavorSet=r=>Object.keys(flavorTerms).filter(f=>flavorTerms[f].some(t=>terms(r).includes(t)));
+ const carbSet=r=>Object.keys(carbTerms).filter(c=>carbTerms[c].some(t=>terms(r).includes(t)));
+ const ingredientSet=r=>new Set(r.ingredients.map(x=>ingredientKey(x.name)));
+ function score(r,chosen){
+  let t=terms(r),v=Math.random()*0.35;
+  for(const f of S.preferences.flavors||[])if((flavorTerms[f]||[]).some(x=>t.includes(x)))v+=2.1;
+  for(const c of S.preferences.carbs||[])if((carbTerms[c]||[]).some(x=>t.includes(x)))v+=1.1;
   if(S.preferences.budget==="low"&&["Beans & lentils","Eggs & beans","Tofu"].includes(r.category))v+=2;
   if(S.preferences.budget==="value"&&["Chicken","Comfort","Beans & lentils","Eggs & beans"].includes(r.category))v+=1;
   if(S.preferences.leftovers==="batch"&&r.leftover==="batch")v+=2;
-  if(S.preferences.leftovers==="minimal"&&r.leftover==="fresh")v+=1;
-  return v}
- let chosen=[],used=new Set(),lastProtein="";
- while(chosen.length<n){let candidates=pool.filter(r=>!used.has(r.id)&&r.protein!==lastProtein);if(!candidates.length)candidates=pool.filter(r=>!used.has(r.id));if(!candidates.length)break;
-  candidates.sort((a,b)=>score(b)-score(a));let top=candidates.slice(0,Math.min(5,candidates.length));let r=top[Math.floor(Math.random()*top.length)];
-  chosen.push(r.id);used.add(r.id);lastProtein=r.protein;
+  if(S.preferences.leftovers==="minimal"&&r.leftover==="fresh")v+=1.5;
+  for(const prior of chosen){
+   if(r.protein===prior.protein)v-=3.8;
+   const fs=flavorSet(r),pfs=flavorSet(prior),cs=carbSet(r),pcs=carbSet(prior);
+   if(fs.some(x=>pfs.includes(x)))v-=0.85;
+   if(cs.some(x=>pcs.includes(x)))v-=0.65;
+   const a=ingredientSet(r),b=ingredientSet(prior);
+   let overlap=0;for(const x of a)if(b.has(x))overlap++;
+   // Favor useful shared ingredients modestly, without making the menu repetitive.
+   v+=Math.min(overlap,4)*0.48;
+  }
+  return v;
  }
- S.plan=chosen;S.checked=[];save();renderPlanned();renderHome();renderGroceries()
+ let chosen=[],used=new Set();
+ while(chosen.length<n){
+  let candidates=pool.filter(r=>!used.has(r.id));
+  if(!candidates.length)break;
+  candidates=candidates.map(r=>({r,s:score(r,chosen)})).sort((a,b)=>b.s-a.s);
+  // Weighted random choice among the strongest candidates keeps plans varied while
+  // retaining the benefits of protein/flavor diversity and ingredient overlap.
+  const top=candidates.slice(0,Math.min(7,candidates.length));
+  const weights=top.map((x,i)=>Math.max(.15,Math.exp((x.s-top[0].s)/2.2)));
+  let pick=Math.random()*weights.reduce((a,b)=>a+b,0),idx=0;
+  while(idx<weights.length-1&&pick>=weights[idx]){pick-=weights[idx];idx++}
+  const r=top[idx].r;chosen.push(r);used.add(r.id);
+ }
+ S.plan=chosen.map(r=>r.id);S.checked=[];save();renderPlanned();renderHome();renderGroceries()
 }
 function openRecipe(id){activeId=id;tab("recipes");renderDetail(id)}
 function renderRecipeList(){let q=($("bookSearch").value||"").toLowerCase();$("recipeList").innerHTML=R.filter(r=>(r.name+" "+r.category+" "+r.protein+" "+r.desc).toLowerCase().includes(q)).map(r=>`<button class="recipe-choice ${r.id===activeId?"active":""}" onclick="activeId='${r.id}';renderRecipeList();renderDetail('${r.id}')"><strong>${esc(r.icon)} ${esc(r.name)}${r.custom?' · ★ Yours':''}</strong><span>${esc(r.category)} · ${r.time} min</span></button>`).join("")||'<div class="empty">No matching recipes.</div>'}
@@ -203,16 +227,54 @@ function resetRecipeForm(){$("recipeForm").reset();$("newRecipeTime").value=30;$
 function editRecipe(id){let r=get(id);if(!r||!r.custom)return;editingRecipeId=id;$("newRecipeName").value=r.name;$("newRecipeCategory").value=r.category;$("newRecipeProtein").value=r.protein;$("newRecipeTime").value=r.time;$("newRecipeIcon").value=r.icon;$("newRecipeEffort").value=r.effort;$("newRecipeDesc").value=r.desc;$("newRecipeIngredients").value=r.ingredients.map(a=>[a.name,a.qty,a.unit,a.group,a.pantry?"yes":""].join(" | ")).join("\n");$("newRecipeSteps").value=r.steps.join("\n");$("recipeFormPanel").classList.remove("hidden");$("recipeFormTitle").textContent="Edit recipe";$("recipeFormPanel").scrollIntoView({behavior:"smooth",block:"start"})}
 function saveRecipeForm(e){e.preventDefault();let wasEditing=!!editingRecipeId;let name=$("newRecipeName").value.trim(),category=$("newRecipeCategory").value,protein=$("newRecipeProtein").value,time=Number($("newRecipeTime").value),icon=$("newRecipeIcon").value.trim()||"🍽️",effort=$("newRecipeEffort").value,desc=$("newRecipeDesc").value.trim();let ingredientLines=$("newRecipeIngredients").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),steps=$("newRecipeSteps").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!ingredientLines.length||!steps.length){alert("Add at least one ingredient and one cooking step.");return}let ingredients=[];for(let i=0;i<ingredientLines.length;i++){let parts=ingredientLines[i].split("|").map(x=>x.trim());if(parts.length<4||!parts[0]||!parts[2]||!parts[3]||!Number.isFinite(Number(parts[1]))||Number(parts[1])<0){alert(`Ingredient line ${i+1} needs: Name | quantity | unit | grocery group | pantry?`);return}ingredients.push(I(parts[0],Number(parts[1]),parts[2],parts[3],/^(yes|y|true|pantry)$/i.test(parts[4]||"")))}let id=editingRecipeId||("custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7));let recipe={id,name,category,protein,time,icon,desc,ingredients,steps,effort,leftover:"fresh",custom:true};if(editingRecipeId){let ix=R.findIndex(r=>r.id===editingRecipeId);if(ix>=0)R[ix]=recipe}else R.push(recipe);activeId=id;save();hideRecipeForm();$("bookSearch").value="";renderRecipeList();renderDetail(id);renderPlannerLibrary();renderHome();renderGroceries();alert(wasEditing?"Recipe updated.":"Recipe added to your recipe book.");editingRecipeId=null}
 function deleteRecipe(id){let r=get(id);if(!r||!r.custom)return;if(!confirm(`Delete "${r.name}" from your recipe book? If it is in this week's plan, that entry will also be removed.`))return;let ix=R.findIndex(x=>x.id===id);if(ix>=0)R.splice(ix,1);S.plan=S.plan.filter(x=>x!==id);if(activeId===id)activeId=R[0]?.id||"";S.checked=[];save();renderRecipeList();renderDetail(activeId);renderPlannerLibrary();renderPlanned();renderHome();renderGroceries()}
-function canon(name){return name.toLowerCase().trim()}
-function buildItems(){let map=new Map(),n=S.servings||1;for(let id of S.plan){let r=get(id);if(!r)continue;for(let a of r.ingredients){let key=canon(a.name)+"|"+a.unit;let item=map.get(key);if(!item){item={name:a.name,unit:a.unit,qty:0,group:a.group,pantry:a.pantry,meals:[]};map.set(key,item)}if(a.unit==="to taste"||a.unit==="pinch"){item.qty=Math.max(item.qty,a.qty*n)}else item.qty+=a.qty*n;if(!item.meals.includes(r.name))item.meals.push(r.name);item.pantry=item.pantry&&a.pantry}}
-const reminders=[I("Salt",1,"to taste","Pantry",true),I("Black pepper",1,"to taste","Pantry",true),I("Olive oil",1,"check pantry","Pantry",true),I("All-purpose flour",1,"check pantry","Pantry",true)];for(let a of reminders){let already=[...map.values()].some(x=>canon(x.name)===canon(a.name));let k=canon(a.name)+"|"+a.unit;if(!already&&!map.has(k))map.set(k,{name:a.name,unit:a.unit,qty:a.qty,group:a.group,pantry:true,meals:[]})}
-return [...map.values()].sort((a,b)=>a.group.localeCompare(b.group)||a.name.localeCompare(b.name))}
+function ingredientKey(name){
+ let n=String(name).toLowerCase().trim().replace(/\([^)]*\)/g,"").replace(/\b(fresh|dried|minced|chopped|crushed|boneless|skinless|fillet|fillets|large|medium|small)\b/g,"").replace(/[,\-]/g," ").replace(/\s+/g," ").trim();
+ const aliases={"garlic cloves":"garlic","garlic clove":"garlic","cloves garlic":"garlic","extra virgin olive oil":"olive oil","black pepper":"black pepper","ground black pepper":"black pepper","parmesan cheese":"parmesan","grated parmesan":"parmesan","baby spinach":"spinach","spinach leaves":"spinach","chicken stock":"chicken broth","beef stock":"beef broth","vegetable stock":"vegetable broth","potatoes":"potato","yellow onion":"onion","red onion":"onion","green bell pepper":"bell pepper","red bell pepper":"bell pepper"};
+ return aliases[n]||n;
+}
+function canon(name){return ingredientKey(name)}
+function normalizedUnit(unit,qty){
+ const u=String(unit||"").toLowerCase().trim();
+ if(["kg","kilogram","kilograms"].includes(u))return {unit:"g",qty:qty*1000};
+ if(["g","gram","grams"].includes(u))return {unit:"g",qty};
+ if(["l","liter","litre","liters","litres"].includes(u))return {unit:"ml",qty:qty*1000};
+ if(["ml","milliliter","milliliters","millilitre","millilitres"].includes(u))return {unit:"ml",qty};
+ if(["tbsp","tablespoon","tablespoons"].includes(u))return {unit:"ml",qty:qty*15};
+ if(["tsp","teaspoon","teaspoons"].includes(u))return {unit:"ml",qty:qty*5};
+ if(["cup","cups"].includes(u))return {unit:"ml",qty:qty*240};
+ if(["oz","ounce","ounces"].includes(u))return {unit:"g",qty:qty*28.3495};
+ if(["lb","lbs","pound","pounds"].includes(u))return {unit:"g",qty:qty*453.592};
+ return {unit:u,qty};
+}
+function buildItems(){
+ let map=new Map(),n=S.servings||1;
+ for(let id of S.plan){
+  let r=get(id);if(!r)continue;
+  for(let a of r.ingredients){
+   const nm=ingredientKey(a.name),norm=normalizedUnit(a.unit,a.qty*n),unit=norm.unit;
+   const special=["to taste","pinch","check pantry"].includes(unit);
+   const key=nm+"|"+unit;
+   let item=map.get(key);
+   if(!item){item={name:a.name,unit,qty:0,group:a.group,pantry:!!a.pantry,meals:[],special};map.set(key,item)}
+   if(special){item.qty=Math.max(item.qty,norm.qty)}else item.qty+=norm.qty;
+   if(!item.meals.includes(r.name))item.meals.push(r.name);
+   item.pantry=item.pantry&&!!a.pantry;
+  }
+ }
+ const reminders=[I("Salt",1,"to taste","Pantry",true),I("Black pepper",1,"to taste","Pantry",true),I("Olive oil",1,"check pantry","Pantry",true),I("All-purpose flour",1,"check pantry","Pantry",true)];
+ for(let a of reminders){
+  let nm=ingredientKey(a.name),already=[...map.values()].some(x=>ingredientKey(x.name)===nm);
+  let k=nm+"|"+a.unit;
+  if(!already&&!map.has(k))map.set(k,{name:a.name,unit:a.unit,qty:a.qty,group:a.group,pantry:true,meals:[],special:true});
+ }
+ return [...map.values()].map(x=>{if(x.unit==="ml"){x.qty=Math.round(x.qty*100)/100;if(x.qty>=1000){x.qty=Math.round(x.qty/10)/100;x.unit="l"}}else if(x.unit==="g"){x.qty=Math.round(x.qty*100)/100;if(x.qty>=1000){x.qty=Math.round(x.qty/10)/100;x.unit="kg"}}else x.qty=Math.round(x.qty*100)/100;return x}).sort((a,b)=>a.group.localeCompare(b.group)||a.name.localeCompare(b.name))
+}
 function displayQty(x){if(x.unit==="to taste"||x.unit==="check pantry")return x.unit;let q=Math.round(x.qty*100)/100;return `${q} ${x.unit}${x.unit==="clove"&&q!==1?"s":""}`}
-function renderGroceries(){let items=buildItems(),groups={};items.forEach(i=>(groups[i.group]??=[]).push(i));$("groceryGroups").innerHTML=Object.entries(groups).map(([group,arr])=>`<div class="grocery-group"><h3>${esc(group)}</h3>${arr.map(i=>{let k=canon(i.name)+"|"+i.unit,checked=S.checked.includes(k);return `<div class="gitem ${checked?"checked":""}"><input type="checkbox" id="g-${hash(k)}" ${checked?"checked":""} onchange="toggleCheck('${encodeURIComponent(k)}',this.checked)"><label for="g-${hash(k)}">${esc(i.name)}${i.meals.length?`<small>For ${esc(i.meals.join(", "))}</small>`:""}${i.pantry?'<small>Pantry check</small>':""}</label><span class="qty">${esc(displayQty(i))}</span></div>`}).join("")}</div>`).join("")||'<div class="empty">Add meals to build your list.</div>';$("totalItems").textContent=items.length;$("doneItems").textContent=S.checked.length;$("servingLabel").textContent=`${S.servings} ${S.servings===1?"person":"people"}`;renderStats()}
+function renderGroceries(){let items=buildItems(),groups={};items.forEach(i=>(groups[i.group]??=[]).push(i));$("groceryGroups").innerHTML=Object.entries(groups).map(([group,arr])=>`<div class="grocery-group"><h3>${esc(group)}</h3>${arr.map(i=>{let k=ingredientKey(i.name)+"|"+i.unit,checked=S.checked.includes(k);return `<div class="gitem ${checked?"checked":""}"><input type="checkbox" id="g-${hash(k)}" ${checked?"checked":""} onchange="toggleCheck('${encodeURIComponent(k)}',this.checked)"><label for="g-${hash(k)}">${esc(i.name)}${i.meals.length?`<small>For ${esc(i.meals.join(", "))}</small>`:""}${i.pantry?'<small>Pantry check</small>':""}</label><span class="qty">${esc(displayQty(i))}</span></div>`}).join("")}</div>`).join("")||'<div class="empty">Add meals to build your list.</div>';$("totalItems").textContent=items.length;$("doneItems").textContent=S.checked.length;$("servingLabel").textContent=`${S.servings} ${S.servings===1?"person":"people"}`;renderStats()}
 function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
 function toggleCheck(k,v){k=decodeURIComponent(k);S.checked=v?[...new Set([...S.checked,k])]:S.checked.filter(x=>x!==k);save();renderGroceries()}
 function clearChecks(){S.checked=[];save();renderGroceries()}
-function copyList(){let items=buildItems(),groups={};items.forEach(i=>(groups[i.group]??=[]).push(i));let t=Object.entries(groups).map(([g,a])=>g+"\n"+a.map(i=>`${S.checked.includes(canon(i.name)+"|"+i.unit)?"[x]":"[ ]"} ${i.name} — ${displayQty(i)}`).join("\n")).join("\n\n");if(navigator.clipboard?.writeText)navigator.clipboard.writeText(t).then(()=>alert("Grocery list copied.")).catch(()=>prompt("Copy grocery list:",t));else prompt("Copy grocery list:",t)}
+function copyList(){let items=buildItems(),groups={};items.forEach(i=>(groups[i.group]??=[]).push(i));let t=Object.entries(groups).map(([g,a])=>g+"\n"+a.map(i=>`${S.checked.includes(ingredientKey(i.name)+"|"+i.unit)?"[x]":"[ ]"} ${i.name} — ${displayQty(i)}`).join("\n")).join("\n\n");if(navigator.clipboard?.writeText)navigator.clipboard.writeText(t).then(()=>alert("Grocery list copied.")).catch(()=>prompt("Copy grocery list:",t));else prompt("Copy grocery list:",t)}
 const chipData={proteins:["Chicken","Beef","Fish/seafood","Eggs","Beans/lentils","Tofu"],carbs:["Rice","Pasta","Potatoes","Tortillas","Beans"],flavors:["Garlic/butter","Savory/umami","Spicy","Creamy/cheesy","Tomato-based","Curry/spiced","Fresh/light","Citrus/herbs"]};
 function renderPrefs(){for(let [group,opts] of Object.entries(chipData))$(group+"Chips").innerHTML=opts.map(o=>`<button class="chip ${(S.preferences[group]||[]).includes(o)?"on":""}" onclick="togglePref('${group}','${o}')">${(S.preferences[group]||[]).includes(o)?"✓ ":""}${o}</button>`).join("");$("effort").value=S.preferences.effort;$("leftovers").value=S.preferences.leftovers;$("budget").value=S.preferences.budget;$("dislikes").value=S.preferences.dislikes;$("notes").value=S.preferences.notes}
 function togglePref(g,o){let a=S.preferences[g]||[];S.preferences[g]=a.includes(o)?a.filter(x=>x!==o):[...a,o];renderPrefs();save()}
