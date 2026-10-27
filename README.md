@@ -39,6 +39,6 @@ Upload the changed files to your host. When changing cached assets, increment `C
 ## Current limitations
 
 - This is a personal-use web app, not an App Store application.
-- Data does not automatically synchronize between iPhone and Windows.
+- Sync is optional and uses Supabase. Both devices must use the same project and account; first sync requires choosing whether to use cloud data or upload that device.
 - Only the app shell is cached; there are no external images or APIs in the current app. Offline behavior should be tested on the target iPhone after deployment.
 - The recipe library is starter data. Several recipes use generated general cooking guidance rather than fully tested recipe steps.

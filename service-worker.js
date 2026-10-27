@@ -1,5 +1,5 @@
 /* Gather offline app shell. Increment CACHE_VERSION when shipping changed assets. */
-const CACHE_VERSION = 'gather-shell-v2';
+const CACHE_VERSION = 'gather-shell-v3';
 const APP_SHELL = [
   './',
   './index.html',

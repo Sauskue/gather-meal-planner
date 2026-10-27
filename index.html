@@ -68,8 +68,16 @@ button,.tab,.chip{min-height:40px}
 </form></div>
 <div class="recipe-layout"><div class="panel"><div class="field"><label for="bookSearch">Find a recipe</label><input id="bookSearch" placeholder="Search recipes…" oninput="renderRecipeList()"></div><div class="recipe-list" id="recipeList"></div></div><div class="panel detail" id="recipeDetail"></div></div>
 </section>
-<section class="page hidden" id="preferences"><div class="head"><div><h2>Your preferences</h2><p>Use these to shape menu generation and future improvements.</p></div><button class="btn primary" onclick="savePrefs()">Save preferences</button></div><div class="panel"><div class="prefs-grid"><div><h3>Proteins</h3><div class="chips" id="proteinChips"></div></div><div><h3>Carbohydrates</h3><div class="chips" id="carbChips"></div></div><div><h3>Flavor directions</h3><div class="chips" id="flavorChips"></div></div><div><h3>Planning style</h3><div class="field"><label for="effort">Cooking effort</label><select id="effort"><option>Easy</option><option selected>Moderate</option><option>Project cooking</option></select></div><div class="field" style="margin-top:10px"><label for="leftovers">Leftovers</label><select id="leftovers"><option value="minimal">Minimal leftovers; cook fresh</option><option value="batch">Batch-friendly dishes welcome</option><option value="mixed">Mix of both</option></select></div><div class="field" style="margin-top:10px"><label for="budget">Budget</label><select id="budget"><option value="flexible">Flexible</option><option value="value">Prioritize value</option><option value="low">Keep costs low</option></select></div></div></div><div class="field" style="margin-top:20px"><label for="dislikes">Dislikes / restrictions</label><textarea id="dislikes" rows="2">Mayonnaise</textarea></div><div class="field" style="margin-top:12px"><label for="notes">Other notes</label><textarea id="notes" rows="2" placeholder="Ingredients to use up, equipment, dietary needs…"></textarea></div><div class="notice">No calorie target is set. You can export a JSON backup or import one on another device.</div><div class="inline-tools" style="margin-top:14px"><button class="btn soft" onclick="exportBackup()">Export backup</button><label class="btn" for="importFile">Import backup</label><input class="hidden" id="importFile" type="file" accept="application/json" onchange="importBackup(event)"><button class="btn" onclick="resetAll()">Reset all data</button></div></div></section>
+<section class="page hidden" id="preferences"><div class="head"><div><h2>Your preferences</h2><p>Use these to shape menu generation and future improvements.</p></div><button class="btn primary" onclick="savePrefs()">Save preferences</button></div><div class="panel"><div class="prefs-grid"><div><h3>Proteins</h3><div class="chips" id="proteinChips"></div></div><div><h3>Carbohydrates</h3><div class="chips" id="carbChips"></div></div><div><h3>Flavor directions</h3><div class="chips" id="flavorChips"></div></div><div><h3>Planning style</h3><div class="field"><label for="effort">Cooking effort</label><select id="effort"><option>Easy</option><option selected>Moderate</option><option>Project cooking</option></select></div><div class="field" style="margin-top:10px"><label for="leftovers">Leftovers</label><select id="leftovers"><option value="minimal">Minimal leftovers; cook fresh</option><option value="batch">Batch-friendly dishes welcome</option><option value="mixed">Mix of both</option></select></div><div class="field" style="margin-top:10px"><label for="budget">Budget</label><select id="budget"><option value="flexible">Flexible</option><option value="value">Prioritize value</option><option value="low">Keep costs low</option></select></div></div></div><div class="field" style="margin-top:20px"><label for="dislikes">Dislikes / restrictions</label><textarea id="dislikes" rows="2">Mayonnaise</textarea></div><div class="field" style="margin-top:12px"><label for="notes">Other notes</label><textarea id="notes" rows="2" placeholder="Ingredients to use up, equipment, dietary needs…"></textarea></div><div class="notice">No calorie target is set. You can export a JSON backup or import one on another device.</div><div class="inline-tools" style="margin-top:14px"><button class="btn soft" onclick="exportBackup()">Export backup</button><label class="btn" for="importFile">Import backup</label><input class="hidden" id="importFile" type="file" accept="application/json" onchange="importBackup(event)"><button class="btn" onclick="resetAll()">Reset all data</button></div></div><div class="panel" style="margin-top:14px"><div class="head" style="margin-top:0"><div><h2>Cloud sync</h2><p>Keep your iPhone and Windows data in sync.</p></div><span class="tag" id="syncBadge">Not connected</span></div>
+<div class="notice">Your data stays on this device and works offline. When signed in and online, Gather syncs recipes, plans, preferences, and grocery checkmarks through your private account. Set up the same Supabase project on each device.</div>
+<div class="prefs-grid" style="margin-top:14px"><div class="field"><label for="syncProjectUrl">Supabase project URL</label><input id="syncProjectUrl" type="url" placeholder="https://your-project.supabase.co" autocomplete="url"></div><div class="field"><label for="syncAnonKey">Supabase publishable/anon key</label><input id="syncAnonKey" type="password" placeholder="sb_publishable_… or legacy anon key" autocomplete="off"></div></div>
+<div class="inline-tools" style="margin-top:10px"><button class="btn" onclick="configureSync()">Save connection</button></div>
+<div class="prefs-grid" style="margin-top:14px"><div class="field"><label for="syncEmail">Account email</label><input id="syncEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="syncPassword">Password</label><input id="syncPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters"></div></div>
+<div class="inline-tools" style="margin-top:10px"><button class="btn primary" onclick="syncAuth('in')">Sign in</button><button class="btn" onclick="syncAuth('up')">Create account</button><button class="btn soft" onclick="syncNow()">Sync now</button><button class="btn" onclick="syncSignOut()">Sign out</button></div>
+<p class="small-muted" id="syncStatus" role="status" aria-live="polite" style="margin-top:10px">Sync is not configured. Your local data is unchanged.</p>
+</div></section>
 <div class="foot">GATHER · Personal Meal Planner · v1.0 · Local-first prototype</div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const I=(name,qty,unit,group,pantry=false)=>({name,qty,unit,group,pantry});
 const make=(id,name,category,protein,time,icon,desc,ingredients,steps=[],effort="Moderate",leftover="fresh")=>({id,name,category,protein,time,icon,desc,ingredients,steps,effort,leftover});
@@ -135,7 +143,7 @@ if(Array.isArray(S.customRecipes)) S.customRecipes.forEach(r=>{if(r && r.id && !
 let editingRecipeId=null, activeId=S.plan[0]||R[0].id;
 const $=id=>document.getElementById(id), get=id=>R.find(r=>r.id===id);
 function esc(x){return String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function save(){S.customRecipes=R.filter(r=>r.custom===true);localStorage.setItem("gatherPlannerV1",JSON.stringify(S));$("saveStatus").textContent="● Saved on this device";renderStats()}
+function save(){S.customRecipes=R.filter(r=>r.custom===true);localStorage.setItem("gatherPlannerV1",JSON.stringify(S));if(!suppressSync){localStorage.setItem("gatherLocalChangedAtV1",new Date().toISOString());queueCloudSync()}$("saveStatus").textContent="● Saved on this device";renderStats()}
 function tab(id){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("hidden",p.id!==id));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===id));if(id==="planner"){renderPlannerLibrary();renderPlanned()}if(id==="groceries")renderGroceries();if(id==="recipes"){renderRecipeList();renderDetail(activeId)}if(id==="preferences")renderPrefs();window.scrollTo({top:0,behavior:"smooth"})}
 document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tab)));
 function card(r,adding=false){return `<article class="meal"><div class="meal-top"><div class="food-icon">${r.icon}</div><span class="tag">${esc(r.category)}</span></div><h3>${esc(r.name)}</h3><p>${esc(r.desc)}</p><div class="meta"><span>◷ ${r.time} min</span><span>● ${esc(r.effort)}</span></div><div class="actions"><button class="btn soft sm" onclick="openRecipe('${r.id}')">Recipe</button>${adding?`<button class="btn primary sm" onclick="addMeal('${r.id}')">Add +</button>`:""}</div></article>`}
@@ -295,4 +303,125 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     });
   });
 }
+
+// --- Gather cloud sync (Supabase; local-first and safe when offline) ---
+let syncClient = null;
+let syncUser = null;
+let syncTimer = null;
+let suppressSync = false;
+const SYNC_CONFIG_KEY = "gatherSyncConfigV1";
+const SYNC_LAST_KEY = "gatherLastSyncedAtV1";
+const LOCAL_CHANGED_KEY = "gatherLocalChangedAtV1";
+function syncStatus(message, badge){
+  const el=$("syncStatus"); if(el) el.textContent=message;
+  const b=$("syncBadge"); if(b) b.textContent=badge|| (syncUser?"Signed in":"Not connected");
+}
+function syncConfig(){try{return JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY)||"null")}catch{return null}}
+function configureSync(){
+  const url=$("syncProjectUrl").value.trim().replace(/\/$/,"");
+  const key=$("syncAnonKey").value.trim();
+  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)||!key){alert("Enter the Supabase project URL and publishable/anon key from your Supabase project settings.");return}
+  localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify({url,key}));
+  if(!window.supabase?.createClient){syncStatus("Connection saved, but the Supabase library did not load. Connect to the internet and reload Gather.","Library unavailable");return}
+  try{syncClient=window.supabase.createClient(url,key);syncStatus("Connection saved. Sign in or create your account.","Configured");}
+  catch(e){syncStatus("Could not configure the connection: "+e.message,"Setup issue")}
+}
+function initSync(){
+  const c=syncConfig(); if(c){$("syncProjectUrl").value=c.url||"";$("syncAnonKey").value=c.key||"";if(window.supabase?.createClient){try{syncClient=window.supabase.createClient(c.url,c.key)}catch{}}}
+  if(!syncClient){syncStatus(window.supabase?.createClient?"Enter your Supabase details and save the connection.":"Sync needs an internet connection to load its cloud library. Gather remains available offline.","Not connected");return}
+  syncClient.auth.getSession().then(async ({data,error})=>{
+    if(error){syncStatus("Could not restore sign-in: "+error.message,"Sign-in issue");return}
+    syncUser=data.session?.user||null;
+    if(syncUser){$("syncEmail").value=syncUser.email||"";syncStatus("Signed in as "+(syncUser.email||"your account")+". Tap Sync now to check for changes.","Signed in");checkRemoteStatus();}
+    else syncStatus("Connection configured. Sign in or create your account.","Configured");
+  });
+}
+async function syncAuth(mode){
+  if(!syncClient){alert("First enter your Supabase project URL and publishable/anon key, then select Save connection.");return}
+  const email=$("syncEmail").value.trim(), password=$("syncPassword").value;
+  if(!email||password.length<6){alert("Enter your email and a password of at least 6 characters.");return}
+  syncStatus(mode==="up"?"Creating account…":"Signing in…","Working…");
+  try{
+    let result=mode==="up"?await syncClient.auth.signUp({email,password}):await syncClient.auth.signInWithPassword({email,password});
+    if(result.error) throw result.error;
+    syncUser=result.data.user||result.data.session?.user||null;
+    if(!result.data.session&&mode==="up") {syncStatus("Account created. Check your email to confirm it, then sign in.","Confirm email");alert("Supabase may require email confirmation. Check your inbox, then sign in here.");return}
+    if(!syncUser){syncStatus("No signed-in user was returned. Try signing in again.","Not signed in");return}
+    syncStatus("Signed in. Checking your cloud data…","Signed in");
+    await syncNow();
+  }catch(e){syncStatus("Sign-in failed: "+(e.message||String(e)),"Sign-in issue")}
+}
+async function getCloudRow(){
+  if(!syncClient||!syncUser)throw new Error("Sign in before syncing.");
+  const {data,error}=await syncClient.from("gather_user_data").select("payload,updated_at").eq("user_id",syncUser.id).maybeSingle();
+  if(error)throw error;return data;
+}
+function cloudIsNewer(row){const last=localStorage.getItem(SYNC_LAST_KEY);return !!(row&&last&&Date.parse(row.updated_at)>Date.parse(last)+500)}
+function localIsNewer(){const local=localStorage.getItem(LOCAL_CHANGED_KEY),last=localStorage.getItem(SYNC_LAST_KEY);return !!(local&&(!last||Date.parse(local)>Date.parse(last)+500))}
+async function writeCloud(){
+  if(!syncClient||!syncUser)throw new Error("Sign in before syncing.");
+  S.customRecipes=R.filter(r=>r.custom===true);
+  const {data,error}=await syncClient.from("gather_user_data").upsert({user_id:syncUser.id,payload:S,updated_at:new Date().toISOString()},{onConflict:"user_id"}).select("updated_at").single();
+  if(error)throw error;
+  const stamp=data?.updated_at||new Date().toISOString();localStorage.setItem(SYNC_LAST_KEY,stamp);localStorage.setItem(LOCAL_CHANGED_KEY,stamp);
+  syncStatus("Synced successfully · "+new Date(stamp).toLocaleString(),"Synced");
+}
+function applyCloudPayload(payload){
+  if(!payload||!Array.isArray(payload.plan)||!payload.preferences)throw new Error("The cloud backup is not a valid Gather data set.");
+  suppressSync=true;
+  try{
+    R.splice(0,R.length,...R.filter(r=>!r.custom));
+    S={...structuredClone(starter),...payload,preferences:{...prefDefaults,...payload.preferences}};
+    if(Array.isArray(S.customRecipes))S.customRecipes.forEach(r=>{if(r&&r.id&&!R.some(y=>y.id===r.id))R.push(r)});
+    localStorage.setItem("gatherPlannerV1",JSON.stringify(S));renderAll();
+  }finally{suppressSync=false}
+}
+async function checkRemoteStatus(){
+  try{const row=await getCloudRow();if(!row){syncStatus("Signed in. No cloud backup yet; Sync now will upload this device.","Ready to upload");return}
+    if(cloudIsNewer(row))syncStatus("A newer cloud copy exists. Tap Sync now to choose which version to keep.","Changes available");
+    else syncStatus("Signed in as "+(syncUser.email||"your account")+". Last cloud update: "+new Date(row.updated_at).toLocaleString(),"Signed in");
+  }catch(e){syncStatus("Could not check cloud data: "+(e.message||String(e)),"Sync issue")}
+}
+async function syncNow(){
+  if(!syncClient||!syncUser){alert("Configure Supabase and sign in first.");return}
+  syncStatus("Checking cloud data…","Syncing…");
+  try{
+    const row=await getCloudRow();
+    if(!row){await writeCloud();return}
+    const last=localStorage.getItem(SYNC_LAST_KEY);
+    if(!last){
+      const useCloud=confirm("A cloud copy already exists.\n\nOK = download cloud data to this device.\nCancel = keep this device's data and replace the cloud copy.");
+      if(useCloud){applyCloudPayload(row.payload);localStorage.setItem(SYNC_LAST_KEY,row.updated_at);localStorage.setItem(LOCAL_CHANGED_KEY,row.updated_at);syncStatus("Cloud data loaded onto this device.","Synced");}
+      else await writeCloud();
+      return;
+    }
+    const remoteChanged=Date.parse(row.updated_at)>Date.parse(last)+500;
+    const localChanged=localIsNewer();
+    if(remoteChanged&&localChanged){
+      const useCloud=confirm("Both this device and the cloud have changed since the last sync.\n\nOK = use cloud data on this device (discard unsynced local changes).\nCancel = upload this device's data and replace the cloud copy.");
+      if(useCloud){applyCloudPayload(row.payload);localStorage.setItem(SYNC_LAST_KEY,row.updated_at);localStorage.setItem(LOCAL_CHANGED_KEY,row.updated_at);syncStatus("Cloud version selected and loaded.","Synced");}
+      else await writeCloud();
+    }else if(remoteChanged){applyCloudPayload(row.payload);localStorage.setItem(SYNC_LAST_KEY,row.updated_at);localStorage.setItem(LOCAL_CHANGED_KEY,row.updated_at);syncStatus("Downloaded the latest cloud data.","Synced");}
+    else if(localChanged){await writeCloud()}
+    else {localStorage.setItem(SYNC_LAST_KEY,row.updated_at);syncStatus("Already up to date · "+new Date(row.updated_at).toLocaleString(),"Synced")}
+  }catch(e){syncStatus("Sync failed: "+(e.message||String(e)),"Sync issue")}
+}
+function queueCloudSync(){
+  if(suppressSync||!syncClient||!syncUser||!navigator.onLine)return;
+  clearTimeout(syncTimer);syncTimer=setTimeout(async()=>{
+    try{
+      const row=await getCloudRow();
+      if(row&&cloudIsNewer(row)){syncStatus("Cloud changes detected. Tap Sync now to resolve before uploading local changes.","Changes available");return}
+      await writeCloud();
+    }catch(e){syncStatus("Saved locally; cloud sync will retry when available. "+(e.message||""),"Offline / retry")}
+  },1800);
+}
+async function syncSignOut(){
+  if(syncClient){try{await syncClient.auth.signOut()}catch{}}
+  syncUser=null;clearTimeout(syncTimer);syncStatus("Signed out. This device's data remains saved locally.","Signed out");
+}
+window.addEventListener("online",()=>{if(syncUser)checkRemoteStatus()});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&syncUser)checkRemoteStatus()});
+
+initSync();
 </script></body></html>
