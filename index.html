@@ -305,63 +305,80 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
 }
 
 // --- Gather cloud sync (Supabase; local-first and safe when offline) ---
-let syncClient = null;
-let syncUser = null;
+window.__gatherSupabaseClient = null;
+window.__gatherSyncUser = null;
 let syncTimer = null;
 let suppressSync = false;
-const SYNC_CONFIG_KEY = "gatherSyncConfigV1";
+var SYNC_CONFIG_KEY = "gatherSyncConfigV1"; // var avoids a temporal-dead-zone failure in packaged Electron contexts
 const SYNC_LAST_KEY = "gatherLastSyncedAtV1";
 const LOCAL_CHANGED_KEY = "gatherLocalChangedAtV1";
 function syncStatus(message, badge){
   const el=$("syncStatus"); if(el) el.textContent=message;
-  const b=$("syncBadge"); if(b) b.textContent=badge|| (syncUser?"Signed in":"Not connected");
+  const b=$("syncBadge"); if(b) b.textContent=badge|| (window.__gatherSyncUser?"Signed in":"Not connected");
 }
 function syncConfig(){try{return JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY)||"null")}catch{return null}}
 function configureSync(){
-  const url=$("syncProjectUrl").value.trim().replace(/\/$/,"");
-  const key=$("syncAnonKey").value.trim();
-  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)||!key){alert("Enter the Supabase project URL and publishable/anon key from your Supabase project settings.");return}
-  localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify({url,key}));
-  if(!window.supabase?.createClient){syncStatus("Connection saved, but the Supabase library did not load. Connect to the internet and reload Gather.","Library unavailable");return}
-  try{syncClient=window.supabase.createClient(url,key);syncStatus("Connection saved. Sign in or create your account.","Configured");}
-  catch(e){syncStatus("Could not configure the connection: "+e.message,"Setup issue")}
+  // Keep the entire operation guarded so a storage or initialization error is visible.
+  try {
+    const urlField=$("syncProjectUrl"), keyField=$("syncAnonKey");
+    if(!urlField || !keyField) throw new Error("The connection fields could not be found. Reload Gather and try again.");
+    const url=urlField.value.trim().replace(/\/$/,"");
+    const key=keyField.value.trim();
+    if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)||!key){
+      syncStatus("Enter a valid Supabase project URL and publishable/anon key.","Setup needed");
+      alert("Enter the Supabase project URL and publishable/anon key from your Supabase project settings.");
+      return;
+    }
+    if(!window.supabase?.createClient){
+      syncStatus("Your settings are valid, but the Supabase library did not load. Check internet access, then reload Gather.","Library unavailable");
+      return;
+    }
+    const client=window.supabase.createClient(url,key);
+    localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify({url,key}));
+    window.__gatherSupabaseClient=client;
+    syncStatus("Connection settings saved. Supabase client initialized. Sign in or create your account next.","Configured");
+  } catch(e) {
+    console.error("Gather Save connection failed:",e);
+    syncStatus("Could not save/configure connection: "+(e?.message||String(e)),"Setup issue");
+    alert("Gather could not save the connection. See the Cloud sync status message for details.");
+  }
 }
 function initSync(){
-  const c=syncConfig(); if(c){$("syncProjectUrl").value=c.url||"";$("syncAnonKey").value=c.key||"";if(window.supabase?.createClient){try{syncClient=window.supabase.createClient(c.url,c.key)}catch{}}}
-  if(!syncClient){syncStatus(window.supabase?.createClient?"Enter your Supabase details and save the connection.":"Sync needs an internet connection to load its cloud library. Gather remains available offline.","Not connected");return}
-  syncClient.auth.getSession().then(async ({data,error})=>{
+  const c=syncConfig(); if(c){$("syncProjectUrl").value=c.url||"";$("syncAnonKey").value=c.key||"";if(window.supabase?.createClient){try{window.__gatherSupabaseClient=window.supabase.createClient(c.url,c.key)}catch{}}}
+  if(!window.__gatherSupabaseClient){syncStatus(window.supabase?.createClient?"Enter your Supabase details and save the connection.":"Sync needs an internet connection to load its cloud library. Gather remains available offline.","Not connected");return}
+  window.__gatherSupabaseClient.auth.getSession().then(async ({data,error})=>{
     if(error){syncStatus("Could not restore sign-in: "+error.message,"Sign-in issue");return}
-    syncUser=data.session?.user||null;
-    if(syncUser){$("syncEmail").value=syncUser.email||"";syncStatus("Signed in as "+(syncUser.email||"your account")+". Tap Sync now to check for changes.","Signed in");checkRemoteStatus();}
+    window.__gatherSyncUser=data.session?.user||null;
+    if(window.__gatherSyncUser){$("syncEmail").value=window.__gatherSyncUser.email||"";syncStatus("Signed in as "+(window.__gatherSyncUser.email||"your account")+". Tap Sync now to check for changes.","Signed in");checkRemoteStatus();}
     else syncStatus("Connection configured. Sign in or create your account.","Configured");
   });
 }
 async function syncAuth(mode){
-  if(!syncClient){alert("First enter your Supabase project URL and publishable/anon key, then select Save connection.");return}
+  if(!window.__gatherSupabaseClient){alert("First enter your Supabase project URL and publishable/anon key, then select Save connection.");return}
   const email=$("syncEmail").value.trim(), password=$("syncPassword").value;
   if(!email||password.length<6){alert("Enter your email and a password of at least 6 characters.");return}
   syncStatus(mode==="up"?"Creating account…":"Signing in…","Working…");
   try{
-    let result=mode==="up"?await syncClient.auth.signUp({email,password}):await syncClient.auth.signInWithPassword({email,password});
+    let result=mode==="up"?await window.__gatherSupabaseClient.auth.signUp({email,password}):await window.__gatherSupabaseClient.auth.signInWithPassword({email,password});
     if(result.error) throw result.error;
-    syncUser=result.data.user||result.data.session?.user||null;
+    window.__gatherSyncUser=result.data.user||result.data.session?.user||null;
     if(!result.data.session&&mode==="up") {syncStatus("Account created. Check your email to confirm it, then sign in.","Confirm email");alert("Supabase may require email confirmation. Check your inbox, then sign in here.");return}
-    if(!syncUser){syncStatus("No signed-in user was returned. Try signing in again.","Not signed in");return}
+    if(!window.__gatherSyncUser){syncStatus("No signed-in user was returned. Try signing in again.","Not signed in");return}
     syncStatus("Signed in. Checking your cloud data…","Signed in");
     await syncNow();
   }catch(e){syncStatus("Sign-in failed: "+(e.message||String(e)),"Sign-in issue")}
 }
 async function getCloudRow(){
-  if(!syncClient||!syncUser)throw new Error("Sign in before syncing.");
-  const {data,error}=await syncClient.from("gather_user_data").select("payload,updated_at").eq("user_id",syncUser.id).maybeSingle();
+  if(!window.__gatherSupabaseClient||!window.__gatherSyncUser)throw new Error("Sign in before syncing.");
+  const {data,error}=await window.__gatherSupabaseClient.from("gather_user_data").select("payload,updated_at").eq("user_id",window.__gatherSyncUser.id).maybeSingle();
   if(error)throw error;return data;
 }
 function cloudIsNewer(row){const last=localStorage.getItem(SYNC_LAST_KEY);return !!(row&&last&&Date.parse(row.updated_at)>Date.parse(last)+500)}
 function localIsNewer(){const local=localStorage.getItem(LOCAL_CHANGED_KEY),last=localStorage.getItem(SYNC_LAST_KEY);return !!(local&&(!last||Date.parse(local)>Date.parse(last)+500))}
 async function writeCloud(){
-  if(!syncClient||!syncUser)throw new Error("Sign in before syncing.");
+  if(!window.__gatherSupabaseClient||!window.__gatherSyncUser)throw new Error("Sign in before syncing.");
   S.customRecipes=R.filter(r=>r.custom===true);
-  const {data,error}=await syncClient.from("gather_user_data").upsert({user_id:syncUser.id,payload:S,updated_at:new Date().toISOString()},{onConflict:"user_id"}).select("updated_at").single();
+  const {data,error}=await window.__gatherSupabaseClient.from("gather_user_data").upsert({user_id:window.__gatherSyncUser.id,payload:S,updated_at:new Date().toISOString()},{onConflict:"user_id"}).select("updated_at").single();
   if(error)throw error;
   const stamp=data?.updated_at||new Date().toISOString();localStorage.setItem(SYNC_LAST_KEY,stamp);localStorage.setItem(LOCAL_CHANGED_KEY,stamp);
   syncStatus("Synced successfully · "+new Date(stamp).toLocaleString(),"Synced");
@@ -379,11 +396,11 @@ function applyCloudPayload(payload){
 async function checkRemoteStatus(){
   try{const row=await getCloudRow();if(!row){syncStatus("Signed in. No cloud backup yet; Sync now will upload this device.","Ready to upload");return}
     if(cloudIsNewer(row))syncStatus("A newer cloud copy exists. Tap Sync now to choose which version to keep.","Changes available");
-    else syncStatus("Signed in as "+(syncUser.email||"your account")+". Last cloud update: "+new Date(row.updated_at).toLocaleString(),"Signed in");
+    else syncStatus("Signed in as "+(window.__gatherSyncUser.email||"your account")+". Last cloud update: "+new Date(row.updated_at).toLocaleString(),"Signed in");
   }catch(e){syncStatus("Could not check cloud data: "+(e.message||String(e)),"Sync issue")}
 }
 async function syncNow(){
-  if(!syncClient||!syncUser){alert("Configure Supabase and sign in first.");return}
+  if(!window.__gatherSupabaseClient||!window.__gatherSyncUser){alert("Configure Supabase and sign in first.");return}
   syncStatus("Checking cloud data…","Syncing…");
   try{
     const row=await getCloudRow();
@@ -407,7 +424,7 @@ async function syncNow(){
   }catch(e){syncStatus("Sync failed: "+(e.message||String(e)),"Sync issue")}
 }
 function queueCloudSync(){
-  if(suppressSync||!syncClient||!syncUser||!navigator.onLine)return;
+  if(suppressSync||!window.__gatherSupabaseClient||!window.__gatherSyncUser||!navigator.onLine)return;
   clearTimeout(syncTimer);syncTimer=setTimeout(async()=>{
     try{
       const row=await getCloudRow();
@@ -417,11 +434,11 @@ function queueCloudSync(){
   },1800);
 }
 async function syncSignOut(){
-  if(syncClient){try{await syncClient.auth.signOut()}catch{}}
-  syncUser=null;clearTimeout(syncTimer);syncStatus("Signed out. This device's data remains saved locally.","Signed out");
+  if(window.__gatherSupabaseClient){try{await window.__gatherSupabaseClient.auth.signOut()}catch{}}
+  window.__gatherSyncUser=null;clearTimeout(syncTimer);syncStatus("Signed out. This device's data remains saved locally.","Signed out");
 }
-window.addEventListener("online",()=>{if(syncUser)checkRemoteStatus()});
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&syncUser)checkRemoteStatus()});
+window.addEventListener("online",()=>{if(window.__gatherSyncUser)checkRemoteStatus()});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&window.__gatherSyncUser)checkRemoteStatus()});
 
 initSync();
 </script></body></html>
