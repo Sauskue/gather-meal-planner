@@ -1,5 +1,8 @@
 # Gather — iPhone-ready web app (PWA)
 
+**Current version: v1.0.0**
+
+
 This folder is a deployable Progressive Web App version of Gather. It reuses the existing meal planner and adds iPhone layout refinements, a web app manifest, app icons, and a service worker for caching the app shell.
 
 ## Important: hosting is required
