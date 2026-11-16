@@ -31,12 +31,12 @@ button,.tab,.chip{min-height:40px}
 </style>
 </head>
 <body><div id="gatherToast" class="gather-toast" role="status" aria-live="polite"></div><div class="app">
-<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.9-test-settings-layout">· v1.0.9-test-settings-layout</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
+<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.10-test-preferences-cleanup">· v1.0.10-test-preferences-cleanup</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
 <nav class="tabs"><button class="tab active" data-tab="home">Overview</button><button class="tab" data-tab="planner">Weekly planner</button><button class="tab" data-tab="groceries">Grocery list <span id="groceryBadge"></span></button><button class="tab" data-tab="recipes">Recipe book</button><button class="tab" data-tab="preferences">Preferences</button><button class="tab" data-tab="settings">Settings</button></nav>
 <section class="page" id="home">
 <div class="hero"><div class="hero-main"><div class="eyebrow">A little more intentional</div><h2>Good food. Less waste.<br>More variety.</h2><p>Plan dinners around what you like, shop from one consolidated list, and save the meals you actually want to cook again.</p><div class="hero-mark">✳</div></div><div class="hero-side"><div class="stat"><strong id="statMeals">3</strong><span>dinners planned</span></div><div class="stat"><strong id="statItems">—</strong><span>shopping ingredients</span></div><div class="stat"><strong>0</strong><span>calorie rules imposed</span></div></div></div>
 <div class="head"><div><h2>This week's menu</h2><p>Starter plan: three different dinners, cooked fresh.</p></div><button class="btn soft" onclick="tab('planner')">Edit week ↗</button></div><div id="homeMeals" class="grid"></div>
-<div class="head"><div><h2>Built around you</h2><p>Your preferences are already in place.</p></div></div><div class="panel"><div class="chips"><span class="chip on">✓ No mayonnaise</span><span class="chip on">✓ Moderate effort</span><span class="chip on">✓ Varied flavors</span><span class="chip on">✓ Fresh-cooked priority</span><span class="chip on">✓ No calorie target</span></div><div class="notice">Your plans and preferences stay in this browser on this device. Use Export backup in Settings to save a copy or transfer your data.</div></div>
+<div class="head"><div><h2>Built around you</h2><p>Your preferences are already in place.</p></div></div><div class="panel"><div class="chips"><span class="chip on">✓ No mayonnaise</span><span class="chip on">✓ Moderate effort</span><span class="chip on">✓ Fresh-cooked priority</span><span class="chip on">✓ No calorie target</span></div><div class="notice">Your plans and preferences stay in this browser on this device. Use Export backup in Settings to save a copy or transfer your data.</div></div>
 </section>
 <section class="page hidden" id="planner">
 <div class="head"><div><h2>Build your week</h2><p>Generate a menu or select each meal yourself.</p></div></div>
@@ -68,7 +68,7 @@ button,.tab,.chip{min-height:40px}
 </form></div>
 <div class="recipe-layout"><div class="panel"><div class="field"><label for="bookSearch">Find a recipe</label><input id="bookSearch" placeholder="Search recipes…" oninput="renderRecipeList()"></div><div class="recipe-list" id="recipeList"></div></div><div class="panel detail" id="recipeDetail"></div></div>
 </section>
-<section class="page hidden" id="preferences"><div class="head"><div><h2>Your preferences</h2><p>Use these to shape menu generation and future improvements.</p></div><button class="btn primary" onclick="savePrefs()">Save preferences</button></div><div class="panel"><div class="prefs-grid"><div><h3>Proteins</h3><div class="chips" id="proteinChips"></div></div><div><h3>Carbohydrates</h3><div class="chips" id="carbChips"></div></div><div><h3>Flavor directions</h3><div class="chips" id="flavorChips"></div></div><div><h3>Planning style</h3><div class="field"><label for="effort">Cooking effort</label><select id="effort"><option>Easy</option><option selected>Moderate</option><option>Project cooking</option></select></div><div class="field" style="margin-top:10px"><label for="leftovers">Leftovers</label><select id="leftovers"><option value="minimal">Minimal leftovers; cook fresh</option><option value="batch">Batch-friendly dishes welcome</option><option value="mixed">Mix of both</option></select></div><div class="field" style="margin-top:10px"><label for="budget">Budget</label><select id="budget"><option value="flexible">Flexible</option><option value="value">Prioritize value</option><option value="low">Keep costs low</option></select></div></div></div><div class="field" style="margin-top:20px"><label for="dislikes">Dislikes / restrictions</label><textarea id="dislikes" rows="2">Mayonnaise</textarea></div><div class="field" style="margin-top:12px"><label for="notes">Other notes</label><textarea id="notes" rows="2" placeholder="Ingredients to use up, equipment, dietary needs…"></textarea></div></div></section>
+<section class="page hidden" id="preferences"><div class="head"><div><h2>Your preferences</h2><p>Use these to shape menu generation and future improvements.</p></div><button class="btn primary" onclick="savePrefs()">Save preferences</button></div><div class="panel"><div class="prefs-grid"><div><h3>Proteins</h3><div class="chips" id="proteinChips"></div></div><div><h3>Carbohydrates</h3><div class="chips" id="carbChips"></div></div><div><h3>Planning style</h3><div class="field"><label for="effort">Cooking effort</label><select id="effort"><option>Easy</option><option selected>Moderate</option><option>Project cooking</option></select></div><div class="field" style="margin-top:10px"><label for="leftovers">Leftovers</label><select id="leftovers"><option value="minimal">Minimal leftovers; cook fresh</option><option value="batch">Batch-friendly dishes welcome</option><option value="mixed">Mix of both</option></select></div></div></div><div class="field" style="margin-top:20px"><label for="dislikes">Dislikes / restrictions</label><textarea id="dislikes" rows="2">Mayonnaise</textarea></div></div></section>
 <section class="page hidden" id="settings"><div class="head"><div><h2>Settings</h2><p>Manage your account, cloud synchronization, and application data.</p></div></div>
 <div class="panel"><h3>Data management</h3><p class="small-muted">Export or import a backup of your Gather data. Keep backup files private.</p><div class="inline-tools" style="margin-top:14px"><button class="btn soft" onclick="exportBackup()">Export backup</button><label class="btn" for="importFile">Import backup</label><input class="hidden" id="importFile" type="file" accept="application/json" onchange="importBackup(event)"><button class="btn" disabled title="Unavailable until unified-library reset is implemented safely">Reset all data</button></div></div>
 <div class="panel" style="margin-top:14px"><div class="head" style="margin-top:0"><div><h2>Cloud sync</h2><p>Keep your iPhone and Windows data in sync.</p></div><span class="tag" id="syncBadge">Not connected</span></div>
@@ -80,10 +80,10 @@ button,.tab,.chip{min-height:40px}
 <div class="inline-tools" style="margin-top:12px"><button class="btn soft" id="gatherSyncNowButton" onclick="syncNow()">Sync now</button><button class="btn" id="gatherSignOutButton" onclick="syncSignOut()">Sign out</button><button class="btn" id="gatherDisconnectButton" onclick="disconnectSync()">Disconnect Supabase</button></div>
 <div class="panel" style="margin-top:14px;background:var(--panel,#fff)"><h3>Connection & account status</h3><div class="prefs-grid"><div><strong>Account</strong><p id="gatherAccountState" class="small-muted">Checking session…</p><p id="gatherAccountEmail" class="small-muted">—</p></div><div><strong>Cloud connection</strong><p id="gatherConnectionState" class="small-muted">Not configured</p></div><div><strong>Recipe synchronization</strong><p id="gatherSyncState" class="small-muted">Not checked</p></div><div><strong>Last successful sync</strong><p id="gatherLastSync" class="small-muted">Never</p></div></div><h3 style="margin-top:12px">Recent activity</h3><div id="gatherSyncHistory" class="small-muted" style="max-height:150px;overflow:auto">No activity recorded</div></div>
 <p class="small-muted" id="syncStatus" role="status" aria-live="polite" style="margin-top:10px">Sync is not configured. Your local data is unchanged.</p>
-<div class="panel" style="margin-top:16px;border:1px solid #b77842"><h3>Controlled synchronization test reset</h3><p class="small-muted">Disabled for the unified recipe library: the old test reset would now delete starter recipes as well. Use individual recipe deletion and synchronization tests instead.</p><div class="inline-tools"><button class="btn" disabled title="Unavailable after recipe-library unification">Step 1 · Reset cloud + this device</button><button class="btn soft" disabled title="Unavailable after recipe-library unification">Step 2 · Reset other device</button></div><p class="small-muted" id="testResetStatus" role="status" aria-live="polite">No reset performed in this session.</p></div>
+
 <pre id="syncConflictDetails" style="display:none;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:8px" aria-label="Recipe sync conflict details"></pre>
 </div></section>
-<div class="foot">GATHER · Personal Meal Planner · v1.0.9-test-settings-layout · Local-first</div></div>
+<div class="foot">GATHER · Personal Meal Planner · v1.0.10-test-preferences-cleanup · Local-first</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const I=(name,qty,unit,group,pantry=false)=>({name,qty,unit,group,pantry});
@@ -142,7 +142,7 @@ make("arrabbiata","Spicy Arrabbiata Pasta","Pasta","Beans/lentils",25,"🌶️",
 make("potato","Loaded Baked Potato","Comfort","Beans/lentils",50,"🥔","Baked potato with cheese, sour cream, and green onion.",[I("Potato",300,"g","Produce"),I("Cheddar",40,"g","Dairy"),I("Sour cream",30,"g","Dairy"),I("Green onion",1,"piece","Produce"),I("Black beans",80,"g","Protein")]),
 make("chickencurry","Chicken and Potato Curry","Chicken","Chicken",40,"🍛","Spiced chicken and potatoes simmered in a fragrant sauce.",[I("Chicken breast",180,"g","Protein"),I("Potato",200,"g","Produce"),I("Crushed tomatoes",150,"g","Pantry",true),I("Onion",0.5,"piece","Produce"),I("Garlic",2,"clove","Produce"),I("Curry powder",8,"g","Pantry",true),I("Rice",75,"g","Pantry",true)])
 ];
-const prefDefaults={proteins:["Chicken","Beef","Fish/seafood","Eggs","Beans/lentils","Tofu"],carbs:["Rice","Pasta","Potatoes","Tortillas","Beans"],flavors:["Garlic/butter","Savory/umami","Spicy","Creamy/cheesy","Tomato-based","Curry/spiced","Fresh/light","Citrus/herbs"],effort:"Moderate",leftovers:"minimal",budget:"flexible",dislikes:"Mayonnaise",notes:""};
+const prefDefaults={proteins:["Chicken","Beef","Fish/seafood","Eggs","Beans/lentils","Tofu"],carbs:["Rice","Pasta","Potatoes","Tortillas","Beans"],effort:"Moderate",leftovers:"minimal",dislikes:"Mayonnaise"};
 const starter={plan:["tuscan","steak","piccata"],servings:1,checked:[],preferences:prefDefaults,pantryOwned:[]};
 function load(){try{const x=JSON.parse(localStorage.getItem("gatherPlannerV1"));return {...structuredClone(starter),...x,preferences:{...prefDefaults,...x?.preferences}}}catch{return structuredClone(starter)}}
 let S=load();
@@ -199,9 +199,7 @@ function generateWeek(){
  const ingredientSet=r=>new Set(r.ingredients.map(x=>ingredientKey(x.name)));
  function score(r,chosen){
   let t=terms(r),v=Math.random()*0.35;
-  for(const f of S.preferences.flavors||[])if((flavorTerms[f]||[]).some(x=>t.includes(x)))v+=2.1;
   for(const c of S.preferences.carbs||[])if((carbTerms[c]||[]).some(x=>t.includes(x)))v+=1.1;
-  if(S.preferences.budget==="low"&&["Beans & lentils","Eggs & beans","Tofu"].includes(r.category))v+=2;
   if(S.preferences.budget==="value"&&["Chicken","Comfort","Beans & lentils","Eggs & beans"].includes(r.category))v+=1;
   if(S.preferences.leftovers==="batch"&&r.leftover==="batch")v+=2;
   if(S.preferences.leftovers==="minimal"&&r.leftover==="fresh")v+=1.5;
@@ -312,21 +310,22 @@ function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;r
 function toggleCheck(k,v){k=decodeURIComponent(k);S.checked=v?[...new Set([...S.checked,k])]:S.checked.filter(x=>x!==k);save();renderGroceries()}
 function clearChecks(){S.checked=[];save();renderGroceries()}
 function copyList(){let items=buildItems(),groups={};items.forEach(i=>(groups[i.group]??=[]).push(i));let t=Object.entries(groups).map(([g,a])=>g+"\n"+a.map(i=>`${S.checked.includes(ingredientKey(i.name)+"|"+i.unit)?"[x]":"[ ]"} ${i.name} — ${displayQty(i)}`).join("\n")).join("\n\n");if(navigator.clipboard?.writeText)navigator.clipboard.writeText(t).then(()=>alert("Grocery list copied.")).catch(()=>showCopyFallback("Copy grocery list",t));else showCopyFallback("Copy grocery list",t)}
-const chipData={proteins:["Chicken","Beef","Fish/seafood","Eggs","Beans/lentils","Tofu"],carbs:["Rice","Pasta","Potatoes","Tortillas","Beans"],flavors:["Garlic/butter","Savory/umami","Spicy","Creamy/cheesy","Tomato-based","Curry/spiced","Fresh/light","Citrus/herbs"]};
+const chipData={proteins:["Chicken","Beef","Fish/seafood","Eggs","Beans/lentils","Tofu"],carbs:["Rice","Pasta","Potatoes","Tortillas","Beans"]};
 function renderPrefs(){
+  for(const obsolete of ["budget","notes","flavors"])delete S.preferences[obsolete];
   // The data keys are plural, but the DOM IDs are singular (proteinChips, carbChips, flavorChips).
-  const chipIds={proteins:"proteinChips",carbs:"carbChips",flavors:"flavorChips"};
+  const chipIds={proteins:"proteinChips",carbs:"carbChips"};
   for(const [group,opts] of Object.entries(chipData)){
     const el=$(chipIds[group]);
     if(!el)continue; // A missing optional UI control must not interrupt a completed sync.
     el.innerHTML=opts.map(o=>`<button class="chip ${(S.preferences[group]||[]).includes(o)?"on":""}" onclick="togglePref('${group}','${o}')">${(S.preferences[group]||[]).includes(o)?"✓ ":""}${o}</button>`).join("");
   }
-  for(const [id,value] of Object.entries({effort:S.preferences.effort,leftovers:S.preferences.leftovers,budget:S.preferences.budget,dislikes:S.preferences.dislikes,notes:S.preferences.notes})){
+  for(const [id,value] of Object.entries({effort:S.preferences.effort,leftovers:S.preferences.leftovers,dislikes:S.preferences.dislikes})){
     const el=$(id);if(el)el.value=value??"";
   }
 }
 function togglePref(g,o){let a=S.preferences[g]||[];S.preferences[g]=a.includes(o)?a.filter(x=>x!==o):[...a,o];renderPrefs();save()}
-function savePrefs(){Object.assign(S.preferences,{effort:$("effort").value,leftovers:$("leftovers").value,budget:$("budget").value,dislikes:$("dislikes").value,notes:$("notes").value});save();alert("Preferences saved on this device.")}
+function savePrefs(){Object.assign(S.preferences,{effort:$("effort").value,leftovers:$("leftovers").value,dislikes:$("dislikes").value});save();alert("Preferences saved on this device.")}
 function gatherBackupPayload(){
   // Snapshot what is actually saved, without calling save() or cloud sync.
   const snapshot=JSON.parse(JSON.stringify(S));
@@ -336,7 +335,7 @@ function gatherBackupPayload(){
 function exportBackup(){
   try{
     const content=gatherBackupPayload();
-    const filename="gather-backup-v1.0.9-test-settings-layout-"+new Date().toISOString().slice(0,10)+".json";
+    const filename="gather-backup-v1.0.10-test-preferences-cleanup-"+new Date().toISOString().slice(0,10)+".json";
     const blob=new Blob([content],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");a.href=url;a.download=filename;
@@ -361,7 +360,7 @@ function showGatherBackupDialog(content,filename,message){
   }
   panel.style.display="flex";$("gatherBackupMessage").textContent=message;$("gatherBackupFilename").textContent=filename;$("gatherBackupText").value=content;
 }
-function savePrefsSilent(){Object.assign(S.preferences,{effort:$("effort").value,leftovers:$("leftovers").value,budget:$("budget").value,dislikes:$("dislikes").value,notes:$("notes").value});save()}
+function savePrefsSilent(){Object.assign(S.preferences,{effort:$("effort").value,leftovers:$("leftovers").value,dislikes:$("dislikes").value});save()}
 function importBackup(e){let f=e.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=()=>{try{let x=JSON.parse(reader.result);if(!Array.isArray(x.plan)||!x.preferences)throw new Error("Invalid backup");R.splice(0,R.length);S={...structuredClone(starter),...x,preferences:{...prefDefaults,...x.preferences}};if(Array.isArray(S.customRecipes))S.customRecipes.forEach(r=>{if(r&&r.id&&!R.some(y=>y.id===r.id))R.push({...r,custom:true})});save();renderAll();alert("Backup imported.")}catch(err){alert("That file doesn't look like a Gather backup.")}};reader.readAsText(f);e.target.value=""}
 function resetAll(){if(!confirm("Reset your plan, preferences, custom recipes, and grocery checkmarks? This cannot be undone unless you exported a backup."))return;R.splice(0,R.length);S={...structuredClone(starter),recipeLibraryInitialized:true,recipeTombstones:{}};save();activeId=S.plan[0]||R[0].id;renderAll()}
 function renderAll(){renderHome();renderPlannerLibrary();renderPlanned();renderGroceries();renderPrefs();renderRecipeList();renderDetail(activeId)}

@@ -1,6 +1,6 @@
-// Gather v1.0.9-test-settings-layout
+// Gather v1.0.10-test-preferences-cleanup
 /* Gather offline app shell. Increment CACHE_VERSION when shipping changed assets. */
-const CACHE_VERSION = 'gather-shell-v8-1.0.9-test-settings-layout';
+const CACHE_VERSION = 'gather-shell-v8-1.0.10-test-preferences-cleanup';
 const APP_SHELL = [
   './',
   './index.html',
