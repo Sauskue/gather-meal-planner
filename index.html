@@ -31,7 +31,7 @@ button,.tab,.chip{min-height:40px}
 </style>
 </head>
 <body><div id="gatherToast" class="gather-toast" role="status" aria-live="polite"></div><div class="app">
-<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.0">· v1.0.0</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
+<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.1">· v1.0.1</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
 <nav class="tabs"><button class="tab active" data-tab="home">Overview</button><button class="tab" data-tab="planner">Weekly planner</button><button class="tab" data-tab="groceries">Grocery list <span id="groceryBadge"></span></button><button class="tab" data-tab="recipes">Recipe book</button><button class="tab" data-tab="preferences">Preferences</button></nav>
 <section class="page" id="home">
 <div class="hero"><div class="hero-main"><div class="eyebrow">A little more intentional</div><h2>Good food. Less waste.<br>More variety.</h2><p>Plan dinners around what you like, shop from one consolidated list, and save the meals you actually want to cook again.</p><div class="hero-mark">✳</div></div><div class="hero-side"><div class="stat"><strong id="statMeals">3</strong><span>dinners planned</span></div><div class="stat"><strong id="statItems">—</strong><span>shopping ingredients</span></div><div class="stat"><strong>0</strong><span>calorie rules imposed</span></div></div></div>
@@ -234,7 +234,7 @@ function showRecipeForm(){editingRecipeId=null;resetRecipeForm();$("recipeFormTi
 function hideRecipeForm(){$("recipeFormPanel").classList.add("hidden");editingRecipeId=null}
 function resetRecipeForm(){$("recipeForm").reset();$("newRecipeTime").value=30;$("newRecipeIcon").value="🍽️";$("newRecipeEffort").value="Moderate";$("newRecipeCategory").value="Other";$("newRecipeProtein").value="Other"}
 function editRecipe(id){let r=get(id);if(!r||!r.custom)return;editingRecipeId=id;$("newRecipeName").value=r.name;$("newRecipeCategory").value=r.category;$("newRecipeProtein").value=r.protein;$("newRecipeTime").value=r.time;$("newRecipeIcon").value=r.icon;$("newRecipeEffort").value=r.effort;$("newRecipeDesc").value=r.desc;$("newRecipeIngredients").value=r.ingredients.map(a=>[a.name,a.qty,a.unit,a.group,a.pantry?"yes":""].join(" | ")).join("\n");$("newRecipeSteps").value=r.steps.join("\n");$("recipeFormPanel").classList.remove("hidden");$("recipeFormTitle").textContent="Edit recipe";$("recipeFormPanel").scrollIntoView({behavior:"smooth",block:"start"})}
-function saveRecipeForm(e){e.preventDefault();let wasEditing=!!editingRecipeId;let name=$("newRecipeName").value.trim(),category=$("newRecipeCategory").value,protein=$("newRecipeProtein").value,time=Number($("newRecipeTime").value),icon=$("newRecipeIcon").value.trim()||"🍽️",effort=$("newRecipeEffort").value,desc=$("newRecipeDesc").value.trim();let ingredientLines=$("newRecipeIngredients").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),steps=$("newRecipeSteps").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!ingredientLines.length||!steps.length){alert("Add at least one ingredient and one cooking step.");return}let ingredients=[];for(let i=0;i<ingredientLines.length;i++){let parts=ingredientLines[i].split("|").map(x=>x.trim());if(parts.length<4||!parts[0]||!parts[2]||!parts[3]||!Number.isFinite(Number(parts[1]))||Number(parts[1])<0){alert(`Ingredient line ${i+1} needs: Name | quantity | unit | grocery group | pantry?`);return}ingredients.push(I(parts[0],Number(parts[1]),parts[2],parts[3],/^(yes|y|true|pantry)$/i.test(parts[4]||"")))}let id=editingRecipeId||("custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7));let recipe={id,name,category,protein,time,icon,desc,ingredients,steps,effort,leftover:"fresh",custom:true};if(editingRecipeId){let ix=R.findIndex(r=>r.id===editingRecipeId);if(ix>=0)R[ix]=recipe}else R.push(recipe);activeId=id;save();hideRecipeForm();resetRecipeForm();$("bookSearch").value="";renderRecipeList();renderDetail(id);renderPlannerLibrary();renderHome();renderGroceries();editingRecipeId=null;showGatherToast(wasEditing?"Recipe updated.":"Recipe saved — it is now at the top of your recipe book.");if($("recipes").classList.contains("hidden")===false){$("recipeList").scrollTop=0;$("recipeList").scrollIntoView({behavior:"smooth",block:"start"})}}
+function saveRecipeForm(e){e.preventDefault();let wasEditing=!!editingRecipeId;let name=$("newRecipeName").value.trim(),category=$("newRecipeCategory").value,protein=$("newRecipeProtein").value,time=Number($("newRecipeTime").value),icon=$("newRecipeIcon").value.trim()||"🍽️",effort=$("newRecipeEffort").value,desc=$("newRecipeDesc").value.trim();let ingredientLines=$("newRecipeIngredients").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),steps=$("newRecipeSteps").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!ingredientLines.length||!steps.length){alert("Add at least one ingredient and one cooking step.");return}let ingredients=[];for(let i=0;i<ingredientLines.length;i++){let parts=ingredientLines[i].split("|").map(x=>x.trim());if(parts.length<4||!parts[0]||!parts[2]||!parts[3]||!Number.isFinite(Number(parts[1]))||Number(parts[1])<0){alert(`Ingredient line ${i+1} needs: Name | quantity | unit | grocery group | pantry?`);return}ingredients.push(I(parts[0],Number(parts[1]),parts[2],parts[3],/^(yes|y|true|pantry)$/i.test(parts[4]||"")))}let id=editingRecipeId||("custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7));let recipe={id,name,category,protein,time,icon,desc,ingredients,steps,effort,leftover:"fresh",custom:true};if(editingRecipeId){let ix=R.findIndex(r=>r.id===editingRecipeId);if(ix>=0)R[ix]=recipe}else R.push(recipe);activeId=id;save();resetRecipeForm();$("recipeFormTitle").textContent="Add another recipe";$("bookSearch").value="";renderRecipeList();renderDetail(id);renderPlannerLibrary();renderHome();renderGroceries();editingRecipeId=null;showGatherToast(wasEditing?"Recipe updated.":"Recipe saved — it is now at the top of your recipe book.");alert(wasEditing?"Recipe updated successfully.":"Recipe saved successfully. The form is cleared and the recipe is at the top of your book.");if($("recipes").classList.contains("hidden")===false){$("recipeList").scrollTop=0;$("recipeList").scrollIntoView({behavior:"smooth",block:"start"})}}
 function deleteRecipe(id){let r=get(id);if(!r||!r.custom)return;if(!confirm(`Delete "${r.name}" from your recipe book? If it is in this week's plan, that entry will also be removed.`))return;let ix=R.findIndex(x=>x.id===id);if(ix>=0)R.splice(ix,1);S.plan=S.plan.filter(x=>x!==id);if(activeId===id)activeId=R[0]?.id||"";S.checked=[];save();renderRecipeList();renderDetail(activeId);renderPlannerLibrary();renderPlanned();renderHome();renderGroceries()}
 function ingredientKey(name){
  let n=String(name).toLowerCase().trim().replace(/\([^)]*\)/g,"").replace(/\b(fresh|dried|minced|chopped|crushed|boneless|skinless|fillet|fillets|large|medium|small)\b/g,"").replace(/[,\-]/g," ").replace(/\s+/g," ").trim();
@@ -288,7 +288,40 @@ const chipData={proteins:["Chicken","Beef","Fish/seafood","Eggs","Beans/lentils"
 function renderPrefs(){for(let [group,opts] of Object.entries(chipData))$(group+"Chips").innerHTML=opts.map(o=>`<button class="chip ${(S.preferences[group]||[]).includes(o)?"on":""}" onclick="togglePref('${group}','${o}')">${(S.preferences[group]||[]).includes(o)?"✓ ":""}${o}</button>`).join("");$("effort").value=S.preferences.effort;$("leftovers").value=S.preferences.leftovers;$("budget").value=S.preferences.budget;$("dislikes").value=S.preferences.dislikes;$("notes").value=S.preferences.notes}
 function togglePref(g,o){let a=S.preferences[g]||[];S.preferences[g]=a.includes(o)?a.filter(x=>x!==o):[...a,o];renderPrefs();save()}
 function savePrefs(){Object.assign(S.preferences,{effort:$("effort").value,leftovers:$("leftovers").value,budget:$("budget").value,dislikes:$("dislikes").value,notes:$("notes").value});save();alert("Preferences saved on this device.")}
-function exportBackup(){savePrefsSilent();let blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="gather-meal-planner-backup.json";a.click();URL.revokeObjectURL(url)}
+function gatherBackupPayload(){
+  // Snapshot what is actually saved, without calling save() or cloud sync.
+  const snapshot=JSON.parse(JSON.stringify(S));
+  snapshot.customRecipes=R.filter(r=>r.custom===true).map(r=>JSON.parse(JSON.stringify(r)));
+  return JSON.stringify(snapshot,null,2);
+}
+function exportBackup(){
+  try{
+    const content=gatherBackupPayload();
+    const filename="gather-backup-v1.0.1-"+new Date().toISOString().slice(0,10)+".json";
+    const blob=new Blob([content],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=filename;
+    a.style.display="none";document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},60000);
+    showGatherBackupDialog(content,filename,"A download was requested. Check Downloads, or copy the backup below if no file appears.");
+  }catch(err){alert("Backup export failed: "+(err.message||String(err)))}
+}
+function showGatherBackupDialog(content,filename,message){
+  let panel=$("gatherBackupPanel");
+  if(!panel){panel=document.createElement("div");panel.id="gatherBackupPanel";
+    panel.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px";
+    panel.innerHTML='<div style="background:#fff;color:#18222a;padding:20px;border-radius:14px;max-width:720px;width:100%;max-height:90vh;overflow:auto"><h2 style="margin:0 0 8px">Backup ready</h2><p id="gatherBackupMessage"></p><p style="font-size:12px" id="gatherBackupFilename"></p><textarea id="gatherBackupText" readonly style="width:100%;height:220px;box-sizing:border-box;font-family:monospace;font-size:12px"></textarea><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn" id="gatherBackupCopy">Copy backup JSON</button><button type="button" class="btn soft" id="gatherBackupClose">Close</button></div><p style="font-size:12px">If the download is blocked, copy all JSON and save it as a .json file. Keep this backup private.</p></div>';
+    document.body.appendChild(panel);
+    $("gatherBackupClose").onclick=()=>panel.style.display="none";
+    $("gatherBackupCopy").onclick=async()=>{const area=$("gatherBackupText");area.focus();area.select();
+      try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(area.value);$("gatherBackupMessage").textContent="Backup copied. Save the copied text in a .json file."}
+      else{$("gatherBackupMessage").textContent="Text selected. Use Copy, then paste into a .json file."}}
+      catch{$("gatherBackupMessage").textContent="Text selected. Use Copy, then paste into a .json file."}
+    };
+  }
+  panel.style.display="flex";$("gatherBackupMessage").textContent=message;$("gatherBackupFilename").textContent=filename;$("gatherBackupText").value=content;
+}
 function savePrefsSilent(){Object.assign(S.preferences,{effort:$("effort").value,leftovers:$("leftovers").value,budget:$("budget").value,dislikes:$("dislikes").value,notes:$("notes").value});save()}
 function importBackup(e){let f=e.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=()=>{try{let x=JSON.parse(reader.result);if(!Array.isArray(x.plan)||!x.preferences)throw new Error("Invalid backup");R.splice(0,R.length,...R.filter(r=>!r.custom));S={...structuredClone(starter),...x,preferences:{...prefDefaults,...x.preferences}};if(Array.isArray(S.customRecipes))S.customRecipes.forEach(r=>{if(r&&r.id&&!R.some(y=>y.id===r.id))R.push(r)});save();renderAll();alert("Backup imported.")}catch(err){alert("That file doesn't look like a Gather backup.")}};reader.readAsText(f);e.target.value=""}
 function resetAll(){if(!confirm("Reset your plan, preferences, custom recipes, and grocery checkmarks? This cannot be undone unless you exported a backup."))return;R.splice(0,R.length,...R.filter(r=>!r.custom));S=structuredClone(starter);save();activeId=S.plan[0]||R[0].id;renderAll()}
@@ -395,49 +428,52 @@ function applyCloudPayload(payload){
   }finally{suppressSync=false}
 }
 async function checkRemoteStatus(){
-  try{const row=await getCloudRow();if(!row){syncStatus("Signed in. No cloud backup yet; Sync now will upload this device.","Ready to upload");return}
-    if(cloudIsNewer(row)){
-      if(localStorage.getItem(SYNC_LAST_KEY)&&!localIsNewer()){
-        applyCloudPayload(row.payload);localStorage.setItem(SYNC_LAST_KEY,row.updated_at);localStorage.setItem(LOCAL_CHANGED_KEY,row.updated_at);
-        syncStatus("Downloaded the latest cloud data · "+new Date(row.updated_at).toLocaleString(),"Synced");return;
-      }
-      syncStatus("A newer cloud copy exists. Tap Sync now to choose which version to keep.","Changes available");
-    }else syncStatus("Signed in as "+(window.__gatherSyncUser.email||"your account")+". Last cloud update: "+new Date(row.updated_at).toLocaleString(),"Signed in");
-  }catch(e){syncStatus("Could not check cloud data: "+(e.message||String(e)),"Sync issue")}
+ try{const row=await getCloudRow();syncStatus(row?"Cloud copy found. Tap Sync now to compare and merge recipes safely.":"No cloud copy yet. Tap Sync now to upload recipes.","Signed in")}
+ catch(e){syncStatus("Could not check cloud data: "+(e.message||String(e)),"Sync issue")}
 }
+function gatherRecipeMap(recipes){const map=new Map();for(const r of recipes||[]){if(r&&typeof r.id==="string"&&r.custom===true)map.set(r.id,r)}return map}
+function gatherSameRecipe(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 async function syncNow(){
-  if(!window.__gatherSupabaseClient||!window.__gatherSyncUser){alert("Configure Supabase and sign in first.");return}
-  syncStatus("Checking cloud data…","Syncing…");
-  try{
-    const row=await getCloudRow();
-    if(!row){await writeCloud();return}
-    const last=localStorage.getItem(SYNC_LAST_KEY);
-    if(!last){
-      const useCloud=confirm("A cloud copy already exists.\n\nOK = download cloud data to this device.\nCancel = keep this device's data and replace the cloud copy.");
-      if(useCloud){applyCloudPayload(row.payload);localStorage.setItem(SYNC_LAST_KEY,row.updated_at);localStorage.setItem(LOCAL_CHANGED_KEY,row.updated_at);syncStatus("Cloud data loaded onto this device.","Synced");}
-      else await writeCloud();
-      return;
-    }
-    const remoteChanged=Date.parse(row.updated_at)>Date.parse(last)+500;
-    const localChanged=localIsNewer();
-    if(remoteChanged&&localChanged){
-      const useCloud=confirm("Both this device and the cloud have changed since the last sync.\n\nOK = use cloud data on this device (discard unsynced local changes).\nCancel = upload this device's data and replace the cloud copy.");
-      if(useCloud){applyCloudPayload(row.payload);localStorage.setItem(SYNC_LAST_KEY,row.updated_at);localStorage.setItem(LOCAL_CHANGED_KEY,row.updated_at);syncStatus("Cloud version selected and loaded.","Synced");}
-      else await writeCloud();
-    }else if(remoteChanged){applyCloudPayload(row.payload);localStorage.setItem(SYNC_LAST_KEY,row.updated_at);localStorage.setItem(LOCAL_CHANGED_KEY,row.updated_at);syncStatus("Downloaded the latest cloud data.","Synced");}
-    else if(localChanged){await writeCloud()}
-    else {localStorage.setItem(SYNC_LAST_KEY,row.updated_at);syncStatus("Already up to date · "+new Date(row.updated_at).toLocaleString(),"Synced")}
-  }catch(e){syncStatus("Sync failed: "+(e.message||String(e)),"Sync issue")}
+ if(!window.__gatherSupabaseClient||!window.__gatherSyncUser){alert("Configure Supabase and sign in first.");return}
+ clearTimeout(syncTimer);syncStatus("Comparing cloud and local recipes…","Syncing…");
+ try{
+  const row=await getCloudRow();
+  const localRecipes=R.filter(r=>r.custom===true);
+  const remoteRecipes=Array.isArray(row?.payload?.customRecipes)?row.payload.customRecipes:[];
+  const localMap=gatherRecipeMap(localRecipes),remoteMap=gatherRecipeMap(remoteRecipes);
+  const localOnly=[...localMap.keys()].filter(id=>!remoteMap.has(id));
+  const remoteOnly=[...remoteMap.keys()].filter(id=>!localMap.has(id));
+  const conflicts=[...localMap.keys()].filter(id=>remoteMap.has(id)&&!gatherSameRecipe(localMap.get(id),remoteMap.get(id)));
+  if(conflicts.length){
+   syncStatus("Sync paused: "+conflicts.length+" recipe ID conflict(s). Export backups from both devices before resolving.","Conflict — no changes");return;
+  }
+  // Store a durable on-device snapshot before any cloud or local replacement.
+  const localSnapshot=gatherBackupPayload();
+  localStorage.setItem("gatherPreSyncBackupV101",localSnapshot);
+  if(row?.payload)localStorage.setItem("gatherCloudPreSyncBackupV101",JSON.stringify(row.payload));
+  const merged=new Map([...remoteMap,...localMap]);
+  const combined=[...merged.values()];
+  if(!row||localOnly.length){
+    // Preserve the cloud's plan/preferences; only add missing recipes.
+    const payload=row?.payload?{...row.payload,customRecipes:combined}:{...JSON.parse(localSnapshot),customRecipes:combined};
+    const {data,error}=await window.__gatherSupabaseClient.from("gather_user_data").upsert({user_id:window.__gatherSyncUser.id,payload,updated_at:new Date().toISOString()},{onConflict:"user_id"}).select("updated_at").single();
+    if(error)throw error;
+    const stamp=data?.updated_at||new Date().toISOString();localStorage.setItem(SYNC_LAST_KEY,stamp);
+  }else if(row?.updated_at){localStorage.setItem(SYNC_LAST_KEY,row.updated_at)}
+  if(remoteOnly.length){
+   for(const id of remoteOnly)R.push(remoteMap.get(id));
+   S.customRecipes=R.filter(r=>r.custom===true);
+   localStorage.setItem("gatherPlannerV1",JSON.stringify(S));
+   renderAll();
+  }
+  localStorage.setItem(LOCAL_CHANGED_KEY,localStorage.getItem(SYNC_LAST_KEY)||new Date().toISOString());
+  syncStatus("Recipe sync complete: "+localOnly.length+" uploaded, "+remoteOnly.length+" downloaded, "+combined.length+" total. Checked "+new Date().toLocaleString()+". Other settings are unchanged.","Recipes synced");
+ }catch(e){syncStatus("Sync failed: "+(e.message||String(e)),"Sync issue")}
 }
 function queueCloudSync(){
-  if(suppressSync||!window.__gatherSupabaseClient||!window.__gatherSyncUser||!navigator.onLine)return;
-  clearTimeout(syncTimer);syncTimer=setTimeout(async()=>{
-    try{
-      const row=await getCloudRow();
-      if(row&&cloudIsNewer(row)){syncStatus("Cloud changes detected. Tap Sync now to resolve before uploading local changes.","Changes available");return}
-      await writeCloud();
-    }catch(e){syncStatus("Saved locally; cloud sync will retry when available. "+(e.message||""),"Offline / retry")}
-  },1800);
+ // v1.0.1 safety: do not automatically overwrite a full cloud dataset.
+ // Use Sync now for recipe-safe reconciliation; other data remains local.
+ if(window.__gatherSyncUser)syncStatus("Saved locally. Tap Sync now to reconcile recipes safely.","Local changes");
 }
 async function syncSignOut(){
   if(window.__gatherSupabaseClient){try{await window.__gatherSupabaseClient.auth.signOut()}catch{}}
