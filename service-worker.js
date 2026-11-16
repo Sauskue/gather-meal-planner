@@ -1,6 +1,6 @@
-// Gather v1.0.8-test-ui-refactor
+// Gather v1.0.9-test-settings-layout
 /* Gather offline app shell. Increment CACHE_VERSION when shipping changed assets. */
-const CACHE_VERSION = 'gather-shell-v8-1.0.8-test-ui-refactor';
+const CACHE_VERSION = 'gather-shell-v8-1.0.9-test-settings-layout';
 const APP_SHELL = [
   './',
   './index.html',

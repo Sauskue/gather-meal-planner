@@ -1,4 +1,4 @@
-# Gather v1.0.8-test-ui-refactor
+# Gather v1.0.9-test-settings-layout
 
 iPhone/browser PWA
 
