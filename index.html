@@ -31,7 +31,7 @@ button,.tab,.chip{min-height:40px}
 </style>
 </head>
 <body><div id="gatherToast" class="gather-toast" role="status" aria-live="polite"></div><div class="app">
-<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.4-test.1">· v1.0.4-test.1</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
+<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.5-test-lww">· v1.0.5-test-lww</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
 <nav class="tabs"><button class="tab active" data-tab="home">Overview</button><button class="tab" data-tab="planner">Weekly planner</button><button class="tab" data-tab="groceries">Grocery list <span id="groceryBadge"></span></button><button class="tab" data-tab="recipes">Recipe book</button><button class="tab" data-tab="preferences">Preferences</button></nav>
 <section class="page" id="home">
 <div class="hero"><div class="hero-main"><div class="eyebrow">A little more intentional</div><h2>Good food. Less waste.<br>More variety.</h2><p>Plan dinners around what you like, shop from one consolidated list, and save the meals you actually want to cook again.</p><div class="hero-mark">✳</div></div><div class="hero-side"><div class="stat"><strong id="statMeals">3</strong><span>dinners planned</span></div><div class="stat"><strong id="statItems">—</strong><span>shopping ingredients</span></div><div class="stat"><strong>0</strong><span>calorie rules imposed</span></div></div></div>
@@ -78,7 +78,7 @@ button,.tab,.chip{min-height:40px}
 <div class="panel" style="margin-top:16px;border:1px solid #b77842"><h3>Controlled synchronization test reset</h3><p class="small-muted">Deletes <strong>custom recipes only</strong> from this device and your signed-in cloud account. Starter recipes, preferences, account, and connection settings remain. First export backups from BOTH devices. Close Gather on the other device until you complete its local reset. This is a testing tool, not the future unified recipe reset.</p><div class="inline-tools"><button class="btn" onclick="resetCloudAndDeviceForTest()">Step 1 · Reset cloud + this device</button><button class="btn soft" onclick="joinTestResetOnDevice()">Step 2 · Reset other device</button></div><p class="small-muted" id="testResetStatus" role="status" aria-live="polite">No reset performed in this session.</p></div>
 <pre id="syncConflictDetails" style="display:none;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:8px" aria-label="Recipe sync conflict details"></pre>
 </div></section>
-<div class="foot">GATHER · Personal Meal Planner · v1.0.4-test · Local-first</div></div>
+<div class="foot">GATHER · Personal Meal Planner · v1.0.5-test-lww · Local-first</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const I=(name,qty,unit,group,pantry=false)=>({name,qty,unit,group,pantry});
@@ -236,8 +236,8 @@ function showRecipeForm(){editingRecipeId=null;resetRecipeForm();$("recipeFormTi
 function hideRecipeForm(){$("recipeFormPanel").classList.add("hidden");editingRecipeId=null}
 function resetRecipeForm(){$("recipeForm").reset();$("newRecipeTime").value=30;$("newRecipeIcon").value="🍽️";$("newRecipeEffort").value="Moderate";$("newRecipeCategory").value="Other";$("newRecipeProtein").value="Other"}
 function editRecipe(id){let r=get(id);if(!r||!r.custom)return;editingRecipeId=id;$("newRecipeName").value=r.name;$("newRecipeCategory").value=r.category;$("newRecipeProtein").value=r.protein;$("newRecipeTime").value=r.time;$("newRecipeIcon").value=r.icon;$("newRecipeEffort").value=r.effort;$("newRecipeDesc").value=r.desc;$("newRecipeIngredients").value=r.ingredients.map(a=>[a.name,a.qty,a.unit,a.group,a.pantry?"yes":""].join(" | ")).join("\n");$("newRecipeSteps").value=r.steps.join("\n");$("recipeFormPanel").classList.remove("hidden");$("recipeFormTitle").textContent="Edit recipe";$("recipeFormPanel").scrollIntoView({behavior:"smooth",block:"start"})}
-function saveRecipeForm(e){e.preventDefault();let wasEditing=!!editingRecipeId;let name=$("newRecipeName").value.trim(),category=$("newRecipeCategory").value,protein=$("newRecipeProtein").value,time=Number($("newRecipeTime").value),icon=$("newRecipeIcon").value.trim()||"🍽️",effort=$("newRecipeEffort").value,desc=$("newRecipeDesc").value.trim();let ingredientLines=$("newRecipeIngredients").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),steps=$("newRecipeSteps").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!ingredientLines.length||!steps.length){alert("Add at least one ingredient and one cooking step.");return}let ingredients=[];for(let i=0;i<ingredientLines.length;i++){let parts=ingredientLines[i].split("|").map(x=>x.trim());if(parts.length<4||!parts[0]||!parts[2]||!parts[3]||!Number.isFinite(Number(parts[1]))||Number(parts[1])<0){alert(`Ingredient line ${i+1} needs: Name | quantity | unit | grocery group | pantry?`);return}ingredients.push(I(parts[0],Number(parts[1]),parts[2],parts[3],/^(yes|y|true|pantry)$/i.test(parts[4]||"")))}let id=editingRecipeId||("custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7));let recipe={id,name,category,protein,time,icon,desc,ingredients,steps,effort,leftover:"fresh",custom:true};if(editingRecipeId){let ix=R.findIndex(r=>r.id===editingRecipeId);if(ix>=0)R[ix]=recipe}else R.push(recipe);activeId=id;save();resetRecipeForm();$("recipeFormTitle").textContent="Add another recipe";$("bookSearch").value="";renderRecipeList();renderDetail(id);renderPlannerLibrary();renderHome();renderGroceries();editingRecipeId=null;showGatherToast(wasEditing?"Recipe updated.":"Recipe saved — it is now at the top of your recipe book.");alert(wasEditing?"Recipe updated successfully.":"Recipe saved successfully. The form is cleared and the recipe is at the top of your book.");if($("recipes").classList.contains("hidden")===false){$("recipeList").scrollTop=0;$("recipeList").scrollIntoView({behavior:"smooth",block:"start"})}}
-function deleteRecipe(id){let r=get(id);if(!r||!r.custom)return;if(!confirm(`Delete "${r.name}" from your recipe book? If it is in this week's plan, that entry will also be removed.`))return;let ix=R.findIndex(x=>x.id===id);if(ix>=0)R.splice(ix,1);S.plan=S.plan.filter(x=>x!==id);if(activeId===id)activeId=R[0]?.id||"";S.checked=[];save();renderRecipeList();renderDetail(activeId);renderPlannerLibrary();renderPlanned();renderHome();renderGroceries()}
+function saveRecipeForm(e){e.preventDefault();let wasEditing=!!editingRecipeId;let name=$("newRecipeName").value.trim(),category=$("newRecipeCategory").value,protein=$("newRecipeProtein").value,time=Number($("newRecipeTime").value),icon=$("newRecipeIcon").value.trim()||"🍽️",effort=$("newRecipeEffort").value,desc=$("newRecipeDesc").value.trim();let ingredientLines=$("newRecipeIngredients").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),steps=$("newRecipeSteps").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!ingredientLines.length||!steps.length){alert("Add at least one ingredient and one cooking step.");return}let ingredients=[];for(let i=0;i<ingredientLines.length;i++){let parts=ingredientLines[i].split("|").map(x=>x.trim());if(parts.length<4||!parts[0]||!parts[2]||!parts[3]||!Number.isFinite(Number(parts[1]))||Number(parts[1])<0){alert(`Ingredient line ${i+1} needs: Name | quantity | unit | grocery group | pantry?`);return}ingredients.push(I(parts[0],Number(parts[1]),parts[2],parts[3],/^(yes|y|true|pantry)$/i.test(parts[4]||"")))}let id=editingRecipeId||("custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7));let recipe={id,name,category,protein,time,icon,desc,ingredients,steps,effort,leftover:"fresh",custom:true,updatedAt:new Date().toISOString()};if(S.recipeTombstones)delete S.recipeTombstones[id];if(editingRecipeId){let ix=R.findIndex(r=>r.id===editingRecipeId);if(ix>=0)R[ix]=recipe}else R.push(recipe);activeId=id;save();resetRecipeForm();$("recipeFormTitle").textContent="Add another recipe";$("bookSearch").value="";renderRecipeList();renderDetail(id);renderPlannerLibrary();renderHome();renderGroceries();editingRecipeId=null;showGatherToast(wasEditing?"Recipe updated.":"Recipe saved — it is now at the top of your recipe book.");alert(wasEditing?"Recipe updated successfully.":"Recipe saved successfully. The form is cleared and the recipe is at the top of your book.");if($("recipes").classList.contains("hidden")===false){$("recipeList").scrollTop=0;$("recipeList").scrollIntoView({behavior:"smooth",block:"start"})}}
+function deleteRecipe(id){let r=get(id);if(!r||!r.custom)return;if(!confirm(`Delete "${r.name}" from your recipe book? If it is in this week's plan, that entry will also be removed.`))return;let ix=R.findIndex(x=>x.id===id);if(ix>=0)R.splice(ix,1);S.plan=S.plan.filter(x=>x!==id);if(activeId===id)activeId=R[0]?.id||"";S.checked=[];S.recipeTombstones=S.recipeTombstones||{};S.recipeTombstones[id]=new Date().toISOString();save();renderRecipeList();renderDetail(activeId);renderPlannerLibrary();renderPlanned();renderHome();renderGroceries()}
 function ingredientKey(name){
  let n=String(name).toLowerCase().trim().replace(/\([^)]*\)/g,"").replace(/\b(fresh|dried|minced|chopped|crushed|boneless|skinless|fillet|fillets|large|medium|small)\b/g,"").replace(/[,\-]/g," ").replace(/\s+/g," ").trim();
  const aliases={"garlic cloves":"garlic","garlic clove":"garlic","cloves garlic":"garlic","extra virgin olive oil":"olive oil","black pepper":"black pepper","ground black pepper":"black pepper","parmesan cheese":"parmesan","grated parmesan":"parmesan","baby spinach":"spinach","spinach leaves":"spinach","chicken stock":"chicken broth","beef stock":"beef broth","vegetable stock":"vegetable broth","potatoes":"potato","yellow onion":"onion","red onion":"onion","green bell pepper":"bell pepper","red bell pepper":"bell pepper"};
@@ -310,7 +310,7 @@ function gatherBackupPayload(){
 function exportBackup(){
   try{
     const content=gatherBackupPayload();
-    const filename="gather-backup-v1.0.4-test.1-"+new Date().toISOString().slice(0,10)+".json";
+    const filename="gather-backup-v1.0.5-test-lww-"+new Date().toISOString().slice(0,10)+".json";
     const blob=new Blob([content],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");a.href=url;a.download=filename;
@@ -454,63 +454,90 @@ async function checkRemoteStatus(){
  try{const row=await getCloudRow();syncStatus(row?"Cloud copy found. Tap Sync now to compare and merge recipes safely.":"No cloud copy yet. Tap Sync now to upload recipes.","Signed in")}
  catch(e){syncStatus("Could not check cloud data: "+(e.message||String(e)),"Sync issue")}
 }
+// v1.0.5: per-recipe last-update-wins, including deletion tombstones.
+// An existing v1.0.4 recipe has no updatedAt. Use the device's last local
+// change time only if it postdates the last successful sync, preserving the
+// unsynced edit that triggered the v1.0.4 conflict.
+function gatherTime(value){const n=Date.parse(value||"");return Number.isFinite(n)?n:0}
 function gatherRecipeMap(recipes){const map=new Map();for(const r of recipes||[]){if(r&&typeof r.id==="string"&&r.custom===true)map.set(r.id,r)}return map}
-function gatherSameRecipe(a,b){return JSON.stringify(a)===JSON.stringify(b)}
+function gatherLegacyStamp(side,row){
+ const synced=gatherTime(localStorage.getItem(SYNC_LAST_KEY));
+ const changed=gatherTime(localStorage.getItem(LOCAL_CHANGED_KEY));
+ if(side==="local")return new Date(changed>synced+500?changed:Math.max(synced,1)).toISOString();
+ return new Date(Math.max(gatherTime(row?.updated_at),1)).toISOString();
+}
 async function syncNow(){
  if(window.__gatherResetBusy){syncStatus("Reset in progress. Sync is unavailable.","Resetting");return;}
- if(!window.__gatherSupabaseClient||!window.__gatherSyncUser){alert("Configure Supabase and sign in first.");return}
- clearTimeout(syncTimer);syncStatus("Comparing cloud and local recipes…","Syncing…");
+ if(!window.__gatherSupabaseClient||!window.__gatherSyncUser){alert("Configure Supabase and sign in first.");return;}
+ clearTimeout(syncTimer);syncStatus("Reconciling recipe updates and deletions…","Syncing…");
  try{
   const row=await getCloudRow();
   const remoteReset=row?.payload?.gatherTestResetId;
-  const localReset=S.gatherTestResetId;
-  if(remoteReset && remoteReset!==localReset){syncStatus("Cloud test reset detected. Do not sync this device yet: export a backup, then use Step 2 to reset its local custom recipes.","Reset required");return;}
-  const localRecipes=R.filter(r=>r.custom===true);
-  const remoteRecipes=Array.isArray(row?.payload?.customRecipes)?row.payload.customRecipes:[];
-  const localMap=gatherRecipeMap(localRecipes),remoteMap=gatherRecipeMap(remoteRecipes);
-  const localOnly=[...localMap.keys()].filter(id=>!remoteMap.has(id));
-  const remoteOnly=[...remoteMap.keys()].filter(id=>!localMap.has(id));
-  const conflicts=[...localMap.keys()].filter(id=>remoteMap.has(id)&&!gatherSameRecipe(localMap.get(id),remoteMap.get(id)));
-  const conflictPanel=$("syncConflictDetails");
-  if(conflictPanel){conflictPanel.style.display="none";conflictPanel.textContent="";}
-  if(conflicts.length){
-   if(conflictPanel){
-     conflictPanel.textContent="Conflicting recipes (local / cloud):\n"+conflicts.map(id=>{
-       const local=localMap.get(id),remote=remoteMap.get(id);
-       return "• "+(local?.name||"Unnamed")+" / "+(remote?.name||"Unnamed")+"\n  ID: "+id;
-     }).join("\n")+"\n\nNo recipes were overwritten. Export backups from both devices before resolving.";
-     conflictPanel.style.display="block";
+  if(remoteReset&&remoteReset!==S.gatherTestResetId){syncStatus("Cloud test reset detected. Run Step 2 on this device before syncing.","Reset required");return;}
+  const localMap=gatherRecipeMap(R.filter(r=>r.custom===true));
+  const remoteMap=gatherRecipeMap(row?.payload?.customRecipes||[]);
+  const localDeleted=S.recipeTombstones||{};
+  const remoteDeleted=row?.payload?.recipeTombstones||{};
+  const localFallback=gatherLegacyStamp("local",row),remoteFallback=gatherLegacyStamp("remote",row);
+  const allIds=new Set([...localMap.keys(),...remoteMap.keys(),...Object.keys(localDeleted),...Object.keys(remoteDeleted)]);
+  const winners=new Map(),tombstones={};
+  let uploads=0,downloads=0,deletions=0;
+  for(const id of allIds){
+   const l=localMap.get(id),r=remoteMap.get(id);
+   const choices=[];
+   if(l)choices.push({side:"local",kind:"recipe",at:gatherTime(l.updatedAt||localFallback),item:l});
+   if(r)choices.push({side:"cloud",kind:"recipe",at:gatherTime(r.updatedAt||remoteFallback),item:r});
+   if(localDeleted[id])choices.push({side:"local",kind:"delete",at:gatherTime(localDeleted[id])});
+   if(remoteDeleted[id])choices.push({side:"cloud",kind:"delete",at:gatherTime(remoteDeleted[id])});
+   // On equal timestamps, prefer the cloud. This makes repeated sync idempotent.
+   choices.sort((a,b)=>b.at-a.at||(a.side==="cloud"?-1:1));
+   const win=choices[0];if(!win)continue;
+   if(win.kind==="delete"){
+    tombstones[id]=new Date(win.at).toISOString();
+    if(l||r)deletions++;
+   }else{
+    const item={...win.item,updatedAt:new Date(win.at).toISOString()};
+    winners.set(id,item);
+    if(win.side==="local"&&(!r||JSON.stringify(item)!==JSON.stringify(r)))uploads++;
+    if(win.side==="cloud"&&(!l||JSON.stringify(item)!==JSON.stringify(l)))downloads++;
    }
-   syncStatus("Sync paused: "+conflicts.length+" recipe ID conflict(s). See details below; no changes made.","Conflict — no changes");return;
   }
-  // Store a durable on-device snapshot before any cloud or local replacement.
-  const localSnapshot=gatherBackupPayload();
-  localStorage.setItem("gatherPreSyncBackupV101",localSnapshot);
+  // Save a recoverable snapshot before changing either side.
+  localStorage.setItem("gatherPreSyncBackupV101",gatherBackupPayload());
   if(row?.payload)localStorage.setItem("gatherCloudPreSyncBackupV101",JSON.stringify(row.payload));
-  const merged=new Map([...remoteMap,...localMap]);
-  const combined=[...merged.values()];
-  if(!row||localOnly.length){
-    // Preserve the cloud's plan/preferences; only add missing recipes.
-    const payload=row?.payload?{...row.payload,customRecipes:combined}:{...JSON.parse(localSnapshot),customRecipes:combined};
-    const {data,error}=await window.__gatherSupabaseClient.from("gather_user_data").upsert({user_id:window.__gatherSyncUser.id,payload,updated_at:new Date().toISOString()},{onConflict:"user_id"}).select("updated_at").single();
-    if(error)throw error;
-    const stamp=data?.updated_at||new Date().toISOString();localStorage.setItem(SYNC_LAST_KEY,stamp);
-  }else if(row?.updated_at){localStorage.setItem(SYNC_LAST_KEY,row.updated_at)}
-  if(remoteOnly.length){
-   for(const id of remoteOnly)R.push(remoteMap.get(id));
-   S.customRecipes=R.filter(r=>r.custom===true);
-   localStorage.setItem("gatherPlannerV1",JSON.stringify(S));
-   try{renderAll()}catch(uiError){console.error("Gather sync applied recipes but could not refresh UI:",uiError);syncStatus("Recipes saved locally, but screen refresh failed: "+(uiError.message||String(uiError)),"Refresh issue");return;}
+  const recipes=[...winners.values()];
+  const payload=row?.payload?JSON.parse(JSON.stringify(row.payload)):JSON.parse(gatherBackupPayload());
+  payload.customRecipes=recipes;payload.recipeTombstones=tombstones;
+  // Only recipe state is synchronized; preserve cloud plans and preferences.
+  const valid=new Set([...R.filter(r=>!r.custom).map(r=>r.id),...winners.keys()]);
+  payload.plan=(payload.plan||[]).filter(id=>valid.has(id));
+  const cloudChanged=!row||JSON.stringify(row.payload?.customRecipes||[])!==JSON.stringify(recipes)||JSON.stringify(row.payload?.recipeTombstones||{})!==JSON.stringify(tombstones);
+  let stamp=row?.updated_at||new Date().toISOString();
+  if(cloudChanged){
+   const {data,error}=await window.__gatherSupabaseClient.from("gather_user_data").upsert({user_id:window.__gatherSyncUser.id,payload,updated_at:new Date().toISOString()},{onConflict:"user_id"}).select("updated_at").single();
+   if(error)throw error;
+   stamp=data?.updated_at||new Date().toISOString();
   }
-  localStorage.setItem(LOCAL_CHANGED_KEY,localStorage.getItem(SYNC_LAST_KEY)||new Date().toISOString());
-  syncStatus("Recipe sync complete: "+localOnly.length+" uploaded, "+remoteOnly.length+" downloaded, "+combined.length+" total. Checked "+new Date().toLocaleString()+". Other settings are unchanged.","Recipes synced");
- }catch(e){syncStatus("Sync failed: "+(e.message||String(e)),"Sync issue")}
+  suppressSync=true;
+  try{
+   R.splice(0,R.length,...R.filter(r=>!r.custom),...recipes);
+   S.customRecipes=recipes;S.recipeTombstones=tombstones;
+   S.plan=(S.plan||[]).filter(id=>R.some(r=>r.id===id));
+   if(!R.some(r=>r.id===activeId))activeId=S.plan[0]||R[0]?.id||"";
+   localStorage.setItem("gatherPlannerV1",JSON.stringify(S));
+   renderAll();
+  }finally{suppressSync=false;}
+  localStorage.setItem(SYNC_LAST_KEY,stamp);
+  localStorage.setItem(LOCAL_CHANGED_KEY,stamp);
+  const panel=$("syncConflictDetails");if(panel){panel.style.display="none";panel.textContent="";}
+  syncStatus("Recipe sync complete: "+uploads+" uploaded, "+downloads+" downloaded, "+deletions+" deletion(s) reconciled, "+recipes.length+" total. Checked "+new Date().toLocaleString()+". Other settings are unchanged.","Recipes synced");
+ }catch(e){syncStatus("Sync failed: "+(e.message||String(e)),"Sync issue");}
 }
 var __gatherResetBusy=false;
 function testResetMessage(message){const el=$("testResetStatus");if(el)el.textContent=message;}
 function clearTestCustomRecipes(resetId){
  R.splice(0,R.length,...R.filter(r=>r.custom!==true));
- S.customRecipes=[];S.plan=(S.plan||[]).filter(id=>R.some(r=>r.id===id));S.checked=[];
+ S.customRecipes=[];S.recipeTombstones={};S.plan=(S.plan||[]).filter(id=>R.some(r=>r.id===id));S.checked=[];
  S.gatherTestResetId=resetId;
  activeId=S.plan[0]||R[0]?.id||"";
  localStorage.setItem("gatherPlannerV1",JSON.stringify(S));
@@ -554,7 +581,7 @@ async function resetCloudAndDeviceForTest(){
   // Preserve the existing cloud preferences/plan, but remove references to deleted recipes.
   const payload=row?.payload?JSON.parse(JSON.stringify(row.payload)):JSON.parse(gatherBackupPayload());
   const deletedIds=new Set((payload.customRecipes||[]).map(r=>r.id));
-  payload.customRecipes=[];
+  payload.customRecipes=[];payload.recipeTombstones={};
   payload.plan=(payload.plan||[]).filter(x=>!deletedIds.has(x));
   payload.checked=[];payload.gatherTestResetId=id;
   const {error}=await window.__gatherSupabaseClient.from("gather_user_data").upsert({user_id:window.__gatherSyncUser.id,payload,updated_at:new Date().toISOString()},{onConflict:"user_id"});

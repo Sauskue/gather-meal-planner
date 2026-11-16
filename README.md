@@ -1,18 +1,15 @@
-# Gather v1.0.3
+# Gather v1.0.5-test-lww
 
-iPhone PWA / GitHub Pages
+iPhone/browser PWA
 
 ## Changes
-- Backup export now displays the complete JSON with a copy fallback.
-- Recipe form clears and displays confirmation after save.
-- Manual Sync now merges custom recipes by ID without overwriting cloud preferences or plans.
-- Automatic cloud writes disabled for safety while sync is being repaired.
-- Last pre-sync snapshots are retained in localStorage (gatherPreSyncBackupV101 and gatherCloudPreSyncBackupV101).
+- Recipe synchronization uses last-update-wins for additions, edits, and deletions.
+- Each edited recipe receives an `updatedAt` timestamp; deleted recipes leave a persistent tombstone.
+- Manual Sync now reconciles both devices without stopping on ordinary edits.
+- The test reset still requires two-device coordination.
+- Built-in recipes are not yet unified with custom recipes.
 
-**Important:** Export a backup from each device before using Sync now. Recipe edits with the same ID but different content pause synchronization. Deletions and non-recipe changes do not sync in this release.
-
-## v1.0.3 fixes
-- Corrects preference chip element IDs during rendering, including after cloud sync.
-- Explicit Supabase auth session persistence and session restoration.
-- Displays local/cloud recipe names and IDs when a conflict pauses sync.
-- Keeps automatic cloud overwrites disabled; export both backups before resolving conflicts.
+## Important
+Export a backup from both devices before upgrading. Update both devices before testing deletion.
+Manual Sync is still required; the device clocks must be reasonably accurate.
+Supabase writes are not transactionally protected against simultaneous syncs.
