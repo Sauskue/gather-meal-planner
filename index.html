@@ -31,7 +31,7 @@ button,.tab,.chip{min-height:40px}
 </style>
 </head>
 <body><div id="gatherToast" class="gather-toast" role="status" aria-live="polite"></div><div class="app">
-<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.3">· v1.0.3</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
+<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.4-test.1">· v1.0.4-test.1</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
 <nav class="tabs"><button class="tab active" data-tab="home">Overview</button><button class="tab" data-tab="planner">Weekly planner</button><button class="tab" data-tab="groceries">Grocery list <span id="groceryBadge"></span></button><button class="tab" data-tab="recipes">Recipe book</button><button class="tab" data-tab="preferences">Preferences</button></nav>
 <section class="page" id="home">
 <div class="hero"><div class="hero-main"><div class="eyebrow">A little more intentional</div><h2>Good food. Less waste.<br>More variety.</h2><p>Plan dinners around what you like, shop from one consolidated list, and save the meals you actually want to cook again.</p><div class="hero-mark">✳</div></div><div class="hero-side"><div class="stat"><strong id="statMeals">3</strong><span>dinners planned</span></div><div class="stat"><strong id="statItems">—</strong><span>shopping ingredients</span></div><div class="stat"><strong>0</strong><span>calorie rules imposed</span></div></div></div>
@@ -310,7 +310,7 @@ function gatherBackupPayload(){
 function exportBackup(){
   try{
     const content=gatherBackupPayload();
-    const filename="gather-backup-v1.0.3-"+new Date().toISOString().slice(0,10)+".json";
+    const filename="gather-backup-v1.0.4-test.1-"+new Date().toISOString().slice(0,10)+".json";
     const blob=new Blob([content],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");a.href=url;a.download=filename;
@@ -518,8 +518,27 @@ function clearTestCustomRecipes(resetId){
  renderAll();
 }
 function confirmTestReset(action,localCount,remoteCount){
- if(!confirm(`TEST RESET: ${action}\n\nLocal custom recipes: ${localCount}\nCloud custom recipes: ${remoteCount}\n\nHave you exported and verified backups from BOTH devices? This cannot be undone without backups.`))return false;
- return prompt('Type RESET to confirm deletion of the test custom recipes:')==='RESET';
+ return new Promise(resolve=>{
+  const overlay=document.createElement("div");
+  overlay.setAttribute("role","presentation");
+  overlay.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px";
+  const panel=document.createElement("div");
+  panel.setAttribute("role","dialog");panel.setAttribute("aria-modal","true");panel.setAttribute("aria-label","Confirm test reset");
+  panel.style.cssText="background:var(--card,#fff);color:var(--text,#222);padding:24px;border-radius:14px;max-width:480px;width:100%;box-shadow:0 20px 60px #0005";
+  panel.innerHTML=`<h2 style="margin-top:0">Confirm test reset</h2><p id="testResetAction"></p><p><strong>Local custom recipes:</strong> <span id="testResetLocal"></span><br><strong>Cloud custom recipes:</strong> <span id="testResetCloud"></span></p><p>This permanently removes test custom recipes. Verify backups from BOTH devices before proceeding.</p><label style="display:block;margin-bottom:8px">Type <strong>RESET</strong> to continue:</label><input id="testResetTyped" autocomplete="off" spellcheck="false" style="width:100%;padding:10px;margin-bottom:14px;border:1px solid #999;border-radius:6px"><div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="btn" id="testResetCancel">Cancel</button><button type="button" class="btn primary" id="testResetProceed" disabled>Delete test recipes</button></div>`;
+  overlay.appendChild(panel);document.body.appendChild(overlay);
+  panel.querySelector("#testResetAction").textContent=action;
+  panel.querySelector("#testResetLocal").textContent=String(localCount);
+  panel.querySelector("#testResetCloud").textContent=String(remoteCount);
+  const input=panel.querySelector("#testResetTyped"),proceed=panel.querySelector("#testResetProceed");
+  const finish=answer=>{document.removeEventListener("keydown",onKey);overlay.remove();resolve(answer)};
+  const onKey=e=>{if(e.key==="Escape"){e.preventDefault();finish(false)}};
+  document.addEventListener("keydown",onKey);
+  input.addEventListener("input",()=>{proceed.disabled=input.value!=="RESET"});
+  panel.querySelector("#testResetCancel").addEventListener("click",()=>finish(false));
+  proceed.addEventListener("click",()=>{if(input.value==="RESET")finish(true)});
+  input.focus();
+ });
 }
 async function resetCloudAndDeviceForTest(){
  if(__gatherResetBusy)return;
@@ -530,7 +549,7 @@ async function resetCloudAndDeviceForTest(){
   const row=await getCloudRow();
   const remoteCount=Array.isArray(row?.payload?.customRecipes)?row.payload.customRecipes.length:0;
   const localCount=R.filter(r=>r.custom===true).length;
-  if(!confirmTestReset("Reset cloud and this device",localCount,remoteCount)){testResetMessage("Canceled; no data changed.");return;}
+  if(!await confirmTestReset("Reset cloud and this device",localCount,remoteCount)){testResetMessage("Canceled; no data changed.");return;}
   const id="test-reset-"+new Date().toISOString()+"-"+Math.random().toString(36).slice(2);
   // Preserve the existing cloud preferences/plan, but remove references to deleted recipes.
   const payload=row?.payload?JSON.parse(JSON.stringify(row.payload)):JSON.parse(gatherBackupPayload());
@@ -556,7 +575,7 @@ async function joinTestResetOnDevice(){
   const row=await getCloudRow();const id=row?.payload?.gatherTestResetId;
   if(!id||!Array.isArray(row.payload.customRecipes)||row.payload.customRecipes.length){testResetMessage("Cloud is not in a verified empty test-reset state. Complete Step 1 on the first device.");return;}
   const localCount=R.filter(r=>r.custom===true).length;
-  if(!confirmTestReset("Clear this device to match the cloud test reset",localCount,0)){testResetMessage("Canceled; no data changed.");return;}
+  if(!await confirmTestReset("Clear this device to match the cloud test reset",localCount,0)){testResetMessage("Canceled; no data changed.");return;}
   clearTestCustomRecipes(id);
   testResetMessage("This device now matches the cloud test reset. You may begin one-recipe sync testing.");
   syncStatus("Local test reset complete. Ready for recipe tests.","Reset complete");
