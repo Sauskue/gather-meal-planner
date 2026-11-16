@@ -1,4 +1,4 @@
-# Gather v1.0.2
+# Gather v1.0.3
 
 iPhone PWA / GitHub Pages
 
@@ -10,3 +10,9 @@ iPhone PWA / GitHub Pages
 - Last pre-sync snapshots are retained in localStorage (gatherPreSyncBackupV101 and gatherCloudPreSyncBackupV101).
 
 **Important:** Export a backup from each device before using Sync now. Recipe edits with the same ID but different content pause synchronization. Deletions and non-recipe changes do not sync in this release.
+
+## v1.0.3 fixes
+- Corrects preference chip element IDs during rendering, including after cloud sync.
+- Explicit Supabase auth session persistence and session restoration.
+- Displays local/cloud recipe names and IDs when a conflict pauses sync.
+- Keeps automatic cloud overwrites disabled; export both backups before resolving conflicts.

@@ -31,7 +31,7 @@ button,.tab,.chip{min-height:40px}
 </style>
 </head>
 <body><div id="gatherToast" class="gather-toast" role="status" aria-live="polite"></div><div class="app">
-<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.1">· v1.0.2</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
+<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.3">· v1.0.3</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
 <nav class="tabs"><button class="tab active" data-tab="home">Overview</button><button class="tab" data-tab="planner">Weekly planner</button><button class="tab" data-tab="groceries">Grocery list <span id="groceryBadge"></span></button><button class="tab" data-tab="recipes">Recipe book</button><button class="tab" data-tab="preferences">Preferences</button></nav>
 <section class="page" id="home">
 <div class="hero"><div class="hero-main"><div class="eyebrow">A little more intentional</div><h2>Good food. Less waste.<br>More variety.</h2><p>Plan dinners around what you like, shop from one consolidated list, and save the meals you actually want to cook again.</p><div class="hero-mark">✳</div></div><div class="hero-side"><div class="stat"><strong id="statMeals">3</strong><span>dinners planned</span></div><div class="stat"><strong id="statItems">—</strong><span>shopping ingredients</span></div><div class="stat"><strong>0</strong><span>calorie rules imposed</span></div></div></div>
@@ -75,8 +75,9 @@ button,.tab,.chip{min-height:40px}
 <div class="prefs-grid" style="margin-top:14px"><div class="field"><label for="syncEmail">Account email</label><input id="syncEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="syncPassword">Password</label><input id="syncPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters"></div></div>
 <div class="inline-tools" style="margin-top:10px"><button class="btn primary" onclick="syncAuth('in')">Sign in</button><button class="btn" onclick="syncAuth('up')">Create account</button><button class="btn soft" onclick="syncNow()">Sync now</button><button class="btn" onclick="syncSignOut()">Sign out</button></div>
 <p class="small-muted" id="syncStatus" role="status" aria-live="polite" style="margin-top:10px">Sync is not configured. Your local data is unchanged.</p>
+<pre id="syncConflictDetails" style="display:none;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:8px" aria-label="Recipe sync conflict details"></pre>
 </div></section>
-<div class="foot">GATHER · Personal Meal Planner · v1.0 · Local-first prototype</div></div>
+<div class="foot">GATHER · Personal Meal Planner · v1.0.3 · Local-first</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const I=(name,qty,unit,group,pantry=false)=>({name,qty,unit,group,pantry});
@@ -285,7 +286,18 @@ function toggleCheck(k,v){k=decodeURIComponent(k);S.checked=v?[...new Set([...S.
 function clearChecks(){S.checked=[];save();renderGroceries()}
 function copyList(){let items=buildItems(),groups={};items.forEach(i=>(groups[i.group]??=[]).push(i));let t=Object.entries(groups).map(([g,a])=>g+"\n"+a.map(i=>`${S.checked.includes(ingredientKey(i.name)+"|"+i.unit)?"[x]":"[ ]"} ${i.name} — ${displayQty(i)}`).join("\n")).join("\n\n");if(navigator.clipboard?.writeText)navigator.clipboard.writeText(t).then(()=>alert("Grocery list copied.")).catch(()=>prompt("Copy grocery list:",t));else prompt("Copy grocery list:",t)}
 const chipData={proteins:["Chicken","Beef","Fish/seafood","Eggs","Beans/lentils","Tofu"],carbs:["Rice","Pasta","Potatoes","Tortillas","Beans"],flavors:["Garlic/butter","Savory/umami","Spicy","Creamy/cheesy","Tomato-based","Curry/spiced","Fresh/light","Citrus/herbs"]};
-function renderPrefs(){for(let [group,opts] of Object.entries(chipData))$(group+"Chips").innerHTML=opts.map(o=>`<button class="chip ${(S.preferences[group]||[]).includes(o)?"on":""}" onclick="togglePref('${group}','${o}')">${(S.preferences[group]||[]).includes(o)?"✓ ":""}${o}</button>`).join("");$("effort").value=S.preferences.effort;$("leftovers").value=S.preferences.leftovers;$("budget").value=S.preferences.budget;$("dislikes").value=S.preferences.dislikes;$("notes").value=S.preferences.notes}
+function renderPrefs(){
+  // The data keys are plural, but the DOM IDs are singular (proteinChips, carbChips, flavorChips).
+  const chipIds={proteins:"proteinChips",carbs:"carbChips",flavors:"flavorChips"};
+  for(const [group,opts] of Object.entries(chipData)){
+    const el=$(chipIds[group]);
+    if(!el)continue; // A missing optional UI control must not interrupt a completed sync.
+    el.innerHTML=opts.map(o=>`<button class="chip ${(S.preferences[group]||[]).includes(o)?"on":""}" onclick="togglePref('${group}','${o}')">${(S.preferences[group]||[]).includes(o)?"✓ ":""}${o}</button>`).join("");
+  }
+  for(const [id,value] of Object.entries({effort:S.preferences.effort,leftovers:S.preferences.leftovers,budget:S.preferences.budget,dislikes:S.preferences.dislikes,notes:S.preferences.notes})){
+    const el=$(id);if(el)el.value=value??"";
+  }
+}
 function togglePref(g,o){let a=S.preferences[g]||[];S.preferences[g]=a.includes(o)?a.filter(x=>x!==o):[...a,o];renderPrefs();save()}
 function savePrefs(){Object.assign(S.preferences,{effort:$("effort").value,leftovers:$("leftovers").value,budget:$("budget").value,dislikes:$("dislikes").value,notes:$("notes").value});save();alert("Preferences saved on this device.")}
 function gatherBackupPayload(){
@@ -297,7 +309,7 @@ function gatherBackupPayload(){
 function exportBackup(){
   try{
     const content=gatherBackupPayload();
-    const filename="gather-backup-v1.0.2-"+new Date().toISOString().slice(0,10)+".json";
+    const filename="gather-backup-v1.0.3-"+new Date().toISOString().slice(0,10)+".json";
     const blob=new Blob([content],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");a.href=url;a.download=filename;
@@ -350,6 +362,16 @@ function syncStatus(message, badge){
   const el=$("syncStatus"); if(el) el.textContent=message;
   const b=$("syncBadge"); if(b) b.textContent=badge|| (window.__gatherSyncUser?"Signed in":"Not connected");
 }
+function gatherCreateSyncClient(url,key){
+  const client=window.supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"gather-supabase-auth-v1"}});
+  client.auth.onAuthStateChange((event,session)=>{
+    window.__gatherSyncUser=session?.user||null;
+    if(session?.user){const email=$("syncEmail");if(email)email.value=session.user.email||"";}
+    // Do not overwrite active sync/conflict messages from background token refreshes.
+    if(event==="SIGNED_OUT")syncStatus("Signed out. Local recipes are still saved.","Signed out");
+  });
+  return client;
+}
 function syncConfig(){try{return JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY)||"null")}catch{return null}}
 function configureSync(){
   // Keep the entire operation guarded so a storage or initialization error is visible.
@@ -367,7 +389,7 @@ function configureSync(){
       syncStatus("Your settings are valid, but the Supabase library did not load. Check internet access, then reload Gather.","Library unavailable");
       return;
     }
-    const client=window.supabase.createClient(url,key);
+    const client=gatherCreateSyncClient(url,key);
     localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify({url,key}));
     window.__gatherSupabaseClient=client;
     syncStatus("Connection settings saved. Supabase client initialized. Sign in or create your account next.","Configured");
@@ -378,7 +400,7 @@ function configureSync(){
   }
 }
 function initSync(){
-  const c=syncConfig(); if(c){$("syncProjectUrl").value=c.url||"";$("syncAnonKey").value=c.key||"";if(window.supabase?.createClient){try{window.__gatherSupabaseClient=window.supabase.createClient(c.url,c.key)}catch{}}}
+  const c=syncConfig(); if(c){$("syncProjectUrl").value=c.url||"";$("syncAnonKey").value=c.key||"";if(window.supabase?.createClient){try{window.__gatherSupabaseClient=gatherCreateSyncClient(c.url,c.key)}catch{}}}
   if(!window.__gatherSupabaseClient){syncStatus(window.supabase?.createClient?"Enter your Supabase details and save the connection.":"Sync needs an internet connection to load its cloud library. Gather remains available offline.","Not connected");return}
   window.__gatherSupabaseClient.auth.getSession().then(async ({data,error})=>{
     if(error){syncStatus("Could not restore sign-in: "+error.message,"Sign-in issue");return}
@@ -444,8 +466,17 @@ async function syncNow(){
   const localOnly=[...localMap.keys()].filter(id=>!remoteMap.has(id));
   const remoteOnly=[...remoteMap.keys()].filter(id=>!localMap.has(id));
   const conflicts=[...localMap.keys()].filter(id=>remoteMap.has(id)&&!gatherSameRecipe(localMap.get(id),remoteMap.get(id)));
+  const conflictPanel=$("syncConflictDetails");
+  if(conflictPanel){conflictPanel.style.display="none";conflictPanel.textContent="";}
   if(conflicts.length){
-   syncStatus("Sync paused: "+conflicts.length+" recipe ID conflict(s). Export backups from both devices before resolving.","Conflict — no changes");return;
+   if(conflictPanel){
+     conflictPanel.textContent="Conflicting recipes (local / cloud):\n"+conflicts.map(id=>{
+       const local=localMap.get(id),remote=remoteMap.get(id);
+       return "• "+(local?.name||"Unnamed")+" / "+(remote?.name||"Unnamed")+"\n  ID: "+id;
+     }).join("\n")+"\n\nNo recipes were overwritten. Export backups from both devices before resolving.";
+     conflictPanel.style.display="block";
+   }
+   syncStatus("Sync paused: "+conflicts.length+" recipe ID conflict(s). See details below; no changes made.","Conflict — no changes");return;
   }
   // Store a durable on-device snapshot before any cloud or local replacement.
   const localSnapshot=gatherBackupPayload();
@@ -464,7 +495,7 @@ async function syncNow(){
    for(const id of remoteOnly)R.push(remoteMap.get(id));
    S.customRecipes=R.filter(r=>r.custom===true);
    localStorage.setItem("gatherPlannerV1",JSON.stringify(S));
-   renderAll();
+   try{renderAll()}catch(uiError){console.error("Gather sync applied recipes but could not refresh UI:",uiError);syncStatus("Recipes saved locally, but screen refresh failed: "+(uiError.message||String(uiError)),"Refresh issue");return;}
   }
   localStorage.setItem(LOCAL_CHANGED_KEY,localStorage.getItem(SYNC_LAST_KEY)||new Date().toISOString());
   syncStatus("Recipe sync complete: "+localOnly.length+" uploaded, "+remoteOnly.length+" downloaded, "+combined.length+" total. Checked "+new Date().toLocaleString()+". Other settings are unchanged.","Recipes synced");
