@@ -1,4 +1,4 @@
-# Gather v1.0.7-test-preferences-cleanup
+# Gather v1.0.8-test-ui-refactor
 
 iPhone/browser PWA
 
