@@ -1,4 +1,4 @@
-# Gather v1.0.1
+# Gather v1.0.2
 
 iPhone PWA / GitHub Pages
 
