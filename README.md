@@ -1,4 +1,4 @@
-# Gather v1.0.5-test-lww
+# Gather v1.0.6-test-unified
 
 iPhone/browser PWA
 
@@ -7,7 +7,7 @@ iPhone/browser PWA
 - Each edited recipe receives an `updatedAt` timestamp; deleted recipes leave a persistent tombstone.
 - Manual Sync now reconciles both devices without stopping on ordinary edits.
 - The test reset still requires two-device coordination.
-- Built-in recipes are not yet unified with custom recipes.
+- Starter recipes are seeded once and are editable, deletable, and synchronized like every other recipe.
 
 ## Important
 Export a backup from both devices before upgrading. Update both devices before testing deletion.
