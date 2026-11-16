@@ -1,4 +1,4 @@
-# Gather v1.0.6-test-unified
+# Gather v1.0.7-test-preferences-cleanup
 
 iPhone/browser PWA
 
@@ -13,3 +13,6 @@ iPhone/browser PWA
 Export a backup from both devices before upgrading. Update both devices before testing deletion.
 Manual Sync is still required; the device clocks must be reasonably accurate.
 Supabase writes are not transactionally protected against simultaneous syncs.
+
+### v1.0.7 Preferences cleanup
+Cloud setup fields appear only when disconnected; account credentials appear only when signed out. Signed-in users see Sync now, Sign out, and Disconnect Supabase. Disconnect affects only this device and preserves local recipes.

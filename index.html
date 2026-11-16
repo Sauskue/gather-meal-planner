@@ -31,7 +31,7 @@ button,.tab,.chip{min-height:40px}
 </style>
 </head>
 <body><div id="gatherToast" class="gather-toast" role="status" aria-live="polite"></div><div class="app">
-<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.5-test-lww">· v1.0.6-test-unified</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
+<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.7-test-preferences-cleanup">· v1.0.7-test-preferences-cleanup</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
 <nav class="tabs"><button class="tab active" data-tab="home">Overview</button><button class="tab" data-tab="planner">Weekly planner</button><button class="tab" data-tab="groceries">Grocery list <span id="groceryBadge"></span></button><button class="tab" data-tab="recipes">Recipe book</button><button class="tab" data-tab="preferences">Preferences</button></nav>
 <section class="page" id="home">
 <div class="hero"><div class="hero-main"><div class="eyebrow">A little more intentional</div><h2>Good food. Less waste.<br>More variety.</h2><p>Plan dinners around what you like, shop from one consolidated list, and save the meals you actually want to cook again.</p><div class="hero-mark">✳</div></div><div class="hero-side"><div class="stat"><strong id="statMeals">3</strong><span>dinners planned</span></div><div class="stat"><strong id="statItems">—</strong><span>shopping ingredients</span></div><div class="stat"><strong>0</strong><span>calorie rules imposed</span></div></div></div>
@@ -70,16 +70,17 @@ button,.tab,.chip{min-height:40px}
 </section>
 <section class="page hidden" id="preferences"><div class="head"><div><h2>Your preferences</h2><p>Use these to shape menu generation and future improvements.</p></div><button class="btn primary" onclick="savePrefs()">Save preferences</button></div><div class="panel"><div class="prefs-grid"><div><h3>Proteins</h3><div class="chips" id="proteinChips"></div></div><div><h3>Carbohydrates</h3><div class="chips" id="carbChips"></div></div><div><h3>Flavor directions</h3><div class="chips" id="flavorChips"></div></div><div><h3>Planning style</h3><div class="field"><label for="effort">Cooking effort</label><select id="effort"><option>Easy</option><option selected>Moderate</option><option>Project cooking</option></select></div><div class="field" style="margin-top:10px"><label for="leftovers">Leftovers</label><select id="leftovers"><option value="minimal">Minimal leftovers; cook fresh</option><option value="batch">Batch-friendly dishes welcome</option><option value="mixed">Mix of both</option></select></div><div class="field" style="margin-top:10px"><label for="budget">Budget</label><select id="budget"><option value="flexible">Flexible</option><option value="value">Prioritize value</option><option value="low">Keep costs low</option></select></div></div></div><div class="field" style="margin-top:20px"><label for="dislikes">Dislikes / restrictions</label><textarea id="dislikes" rows="2">Mayonnaise</textarea></div><div class="field" style="margin-top:12px"><label for="notes">Other notes</label><textarea id="notes" rows="2" placeholder="Ingredients to use up, equipment, dietary needs…"></textarea></div><div class="notice">No calorie target is set. You can export a JSON backup or import one on another device.</div><div class="inline-tools" style="margin-top:14px"><button class="btn soft" onclick="exportBackup()">Export backup</button><label class="btn" for="importFile">Import backup</label><input class="hidden" id="importFile" type="file" accept="application/json" onchange="importBackup(event)"><button class="btn" disabled title="Unavailable until unified-library reset is implemented safely">Reset all data</button></div></div><div class="panel" style="margin-top:14px"><div class="head" style="margin-top:0"><div><h2>Cloud sync</h2><p>Keep your iPhone and Windows data in sync.</p></div><span class="tag" id="syncBadge">Not connected</span></div>
 <div class="notice">Your data stays on this device and works offline. When signed in and online, Gather synchronizes recipes through your private account. Plans, preferences, and grocery checkmarks remain device-local in this test release. Set up the same Supabase project on each device.</div>
-<div class="prefs-grid" style="margin-top:14px"><div class="field"><label for="syncProjectUrl">Supabase project URL</label><input id="syncProjectUrl" type="url" placeholder="https://your-project.supabase.co" autocomplete="url"></div><div class="field"><label for="syncAnonKey">Supabase publishable/anon key</label><input id="syncAnonKey" type="password" placeholder="sb_publishable_… or legacy anon key" autocomplete="off"></div></div>
-<div class="inline-tools" style="margin-top:10px"><button class="btn" onclick="configureSync()">Save connection</button></div>
-<div class="prefs-grid" style="margin-top:14px"><div class="field"><label for="syncEmail">Account email</label><input id="syncEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="syncPassword">Password</label><input id="syncPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters"></div></div>
-<div class="inline-tools" style="margin-top:10px"><button class="btn primary" onclick="syncAuth('in')">Sign in</button><button class="btn" onclick="syncAuth('up')">Create account</button><button class="btn soft" onclick="syncNow()">Sync now</button><button class="btn" onclick="syncSignOut()">Sign out</button></div>
+<div id="gatherConnectionSetup"><div class="prefs-grid" style="margin-top:14px"><div class="field"><label for="syncProjectUrl">Supabase project URL</label><input id="syncProjectUrl" type="url" placeholder="https://your-project.supabase.co" autocomplete="url"></div><div class="field"><label for="syncAnonKey">Supabase publishable/anon key</label><input id="syncAnonKey" type="password" placeholder="sb_publishable_… or legacy anon key" autocomplete="off"></div></div>
+<div class="inline-tools" style="margin-top:10px"><button class="btn" onclick="configureSync()">Save connection</button></div></div>
+<div id="gatherAccountSetup"><div class="prefs-grid" style="margin-top:14px"><div class="field"><label for="syncEmail">Account email</label><input id="syncEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label for="syncPassword">Password</label><input id="syncPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters"></div></div>
+<div class="inline-tools" style="margin-top:10px"><button class="btn primary" onclick="syncAuth('in')">Sign in</button><button class="btn" onclick="syncAuth('up')">Create account</button></div></div>
+<div class="inline-tools" style="margin-top:12px"><button class="btn soft" id="gatherSyncNowButton" onclick="syncNow()">Sync now</button><button class="btn" id="gatherSignOutButton" onclick="syncSignOut()">Sign out</button><button class="btn" id="gatherDisconnectButton" onclick="disconnectSync()">Disconnect Supabase</button></div>
 <div class="panel" style="margin-top:14px;background:var(--panel,#fff)"><h3>Connection & account status</h3><div class="prefs-grid"><div><strong>Account</strong><p id="gatherAccountState" class="small-muted">Checking session…</p><p id="gatherAccountEmail" class="small-muted">—</p></div><div><strong>Cloud connection</strong><p id="gatherConnectionState" class="small-muted">Not configured</p></div><div><strong>Recipe synchronization</strong><p id="gatherSyncState" class="small-muted">Not checked</p></div><div><strong>Last successful sync</strong><p id="gatherLastSync" class="small-muted">Never</p></div></div><h3 style="margin-top:12px">Recent activity</h3><div id="gatherSyncHistory" class="small-muted" style="max-height:150px;overflow:auto">No activity recorded</div></div>
 <p class="small-muted" id="syncStatus" role="status" aria-live="polite" style="margin-top:10px">Sync is not configured. Your local data is unchanged.</p>
 <div class="panel" style="margin-top:16px;border:1px solid #b77842"><h3>Controlled synchronization test reset</h3><p class="small-muted">Disabled for the unified recipe library: the old test reset would now delete starter recipes as well. Use individual recipe deletion and synchronization tests instead.</p><div class="inline-tools"><button class="btn" disabled title="Unavailable after recipe-library unification">Step 1 · Reset cloud + this device</button><button class="btn soft" disabled title="Unavailable after recipe-library unification">Step 2 · Reset other device</button></div><p class="small-muted" id="testResetStatus" role="status" aria-live="polite">No reset performed in this session.</p></div>
 <pre id="syncConflictDetails" style="display:none;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:8px" aria-label="Recipe sync conflict details"></pre>
 </div></section>
-<div class="foot">GATHER · Personal Meal Planner · v1.0.6-test-unified · Local-first</div></div>
+<div class="foot">GATHER · Personal Meal Planner · v1.0.7-test-preferences-cleanup · Local-first</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const I=(name,qty,unit,group,pantry=false)=>({name,qty,unit,group,pantry});
@@ -322,7 +323,7 @@ function gatherBackupPayload(){
 function exportBackup(){
   try{
     const content=gatherBackupPayload();
-    const filename="gather-backup-v1.0.6-test-unified-"+new Date().toISOString().slice(0,10)+".json";
+    const filename="gather-backup-v1.0.7-test-preferences-cleanup-"+new Date().toISOString().slice(0,10)+".json";
     const blob=new Blob([content],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");a.href=url;a.download=filename;
@@ -374,6 +375,14 @@ var LOCAL_CHANGED_KEY = "gatherLocalChangedAtV1";
 function refreshGatherSyncDashboard(){
  const user=window.__gatherSyncUser;
  const cfg=syncConfig();
+ const configured=!!cfg;
+ const show=(id,visible)=>{const el=$(id);if(el)el.style.display=visible?"":"none"};
+ show("gatherConnectionSetup",!configured);
+ show("gatherAccountSetup",configured&&!user);
+ show("gatherSyncNowButton",configured&&!!user);
+ show("gatherSignOutButton",configured&&!!user);
+ show("gatherDisconnectButton",configured);
+
  const set=(id,value)=>{const el=$(id);if(el)el.textContent=value};
  set("gatherAccountState",user?"Signed in":"Signed out");
  set("gatherAccountEmail",user?.email||"No active account");
@@ -644,6 +653,23 @@ function queueCloudSync(){
  // v1.0.2 safety: do not automatically overwrite a full cloud dataset.
  // Use Sync now for recipe-safe reconciliation; other data remains local.
  if(window.__gatherSyncUser)syncStatus("Saved locally. Tap Sync now to reconcile recipes safely.","Local changes");
+}
+async function disconnectSync(){
+ // Disconnect only this installation. Keep recipes and all other local data intact.
+ if(window.__gatherSupabaseClient){
+   try{await window.__gatherSupabaseClient.auth.signOut()}catch(e){
+     syncStatus("Could not sign out before disconnecting: "+(e.message||String(e)),"Disconnect failed");return;
+   }
+ }
+ window.__gatherSyncUser=null;
+ window.__gatherSupabaseClient=null;
+ clearTimeout(syncTimer);
+ localStorage.removeItem(SYNC_CONFIG_KEY);
+ // Clear the auth session associated with this Supabase client; do not delete recipes.
+ localStorage.removeItem("gather-supabase-auth-v1");
+ $("syncProjectUrl").value="";$("syncAnonKey").value="";
+ $("syncEmail").value="";$("syncPassword").value="";
+ syncStatus("Supabase disconnected on this device. All local recipes are preserved.","Not connected");
 }
 async function syncSignOut(){
   if(window.__gatherSupabaseClient){try{await window.__gatherSupabaseClient.auth.signOut()}catch{}}
