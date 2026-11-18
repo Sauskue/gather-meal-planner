@@ -1,4 +1,4 @@
-# Gather v1.0.10-test-preferences-cleanup
+# Gather v1.0.11-test-sync-hotfix
 
 iPhone/browser PWA
 

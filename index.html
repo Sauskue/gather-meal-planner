@@ -31,7 +31,7 @@ button,.tab,.chip{min-height:40px}
 </style>
 </head>
 <body><div id="gatherToast" class="gather-toast" role="status" aria-live="polite"></div><div class="app">
-<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.10-test-preferences-cleanup">· v1.0.10-test-preferences-cleanup</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
+<header><div class="brand"><div class="logo">✳</div><div><h1>gather<span style="color:var(--orange)">.</span></h1><p>Your personal meal-planning kitchen <span class="gather-version" style="font-size:.78em;opacity:.68;white-space:nowrap" aria-label="Gather version 1.0.11-test-sync-hotfix">· v1.0.11-test-sync-hotfix</span></p></div></div><div class="saved" id="saveStatus">● Saved on this device</div></header>
 <nav class="tabs"><button class="tab active" data-tab="home">Overview</button><button class="tab" data-tab="planner">Weekly planner</button><button class="tab" data-tab="groceries">Grocery list <span id="groceryBadge"></span></button><button class="tab" data-tab="recipes">Recipe book</button><button class="tab" data-tab="preferences">Preferences</button><button class="tab" data-tab="settings">Settings</button></nav>
 <section class="page" id="home">
 <div class="hero"><div class="hero-main"><div class="eyebrow">A little more intentional</div><h2>Good food. Less waste.<br>More variety.</h2><p>Plan dinners around what you like, shop from one consolidated list, and save the meals you actually want to cook again.</p><div class="hero-mark">✳</div></div><div class="hero-side"><div class="stat"><strong id="statMeals">3</strong><span>dinners planned</span></div><div class="stat"><strong id="statItems">—</strong><span>shopping ingredients</span></div><div class="stat"><strong>0</strong><span>calorie rules imposed</span></div></div></div>
@@ -83,7 +83,7 @@ button,.tab,.chip{min-height:40px}
 
 <pre id="syncConflictDetails" style="display:none;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:8px" aria-label="Recipe sync conflict details"></pre>
 </div></section>
-<div class="foot">GATHER · Personal Meal Planner · v1.0.10-test-preferences-cleanup · Local-first</div></div>
+<div class="foot">GATHER · Personal Meal Planner · v1.0.11-test-sync-hotfix · Local-first</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const I=(name,qty,unit,group,pantry=false)=>({name,qty,unit,group,pantry});
@@ -335,7 +335,7 @@ function gatherBackupPayload(){
 function exportBackup(){
   try{
     const content=gatherBackupPayload();
-    const filename="gather-backup-v1.0.10-test-preferences-cleanup-"+new Date().toISOString().slice(0,10)+".json";
+    const filename="gather-backup-v1.0.11-test-sync-hotfix-"+new Date().toISOString().slice(0,10)+".json";
     const blob=new Blob([content],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");a.href=url;a.download=filename;
@@ -520,13 +520,10 @@ function gatherLegacyStamp(side,row){
  return new Date(Math.max(gatherTime(row?.updated_at),1)).toISOString();
 }
 async function syncNow(){
- if(window.__gatherResetBusy){syncStatus("Reset in progress. Sync is unavailable.","Resetting");return;}
  if(!window.__gatherSupabaseClient||!window.__gatherSyncUser){alert("Configure Supabase and sign in first.");return;}
  clearTimeout(syncTimer);syncStatus("Reconciling recipe updates and deletions…","Syncing…");
  try{
   const row=await getCloudRow();
-  const remoteReset=row?.payload?.gatherTestResetId;
-  if(remoteReset&&remoteReset!==S.gatherTestResetId){syncStatus("Cloud test reset detected. Run Step 2 on this device before syncing.","Reset required");return;}
   const localMap=gatherRecipeMap(R.filter(r=>r.custom===true));
   const remoteMap=gatherRecipeMap(row?.payload?.customRecipes||[]);
   const localDeleted=S.recipeTombstones||{};
@@ -585,82 +582,6 @@ async function syncNow(){
   const panel=$("syncConflictDetails");if(panel){panel.style.display="none";panel.textContent="";}
   syncStatus("Recipe sync complete: "+uploads+" uploaded, "+downloads+" downloaded, "+deletions+" deletion(s) reconciled, "+recipes.length+" total. Checked "+new Date().toLocaleString()+". Other settings are unchanged.","Recipes synced");
  }catch(e){syncStatus("Sync failed: "+(e.message||String(e)),"Sync issue");}
-}
-var __gatherResetBusy=false;
-function testResetMessage(message){const el=$("testResetStatus");if(el)el.textContent=message;}
-function clearTestCustomRecipes(resetId){
- R.splice(0,R.length);
- S.customRecipes=[];S.recipeTombstones={};S.plan=(S.plan||[]).filter(id=>R.some(r=>r.id===id));S.checked=[];
- S.gatherTestResetId=resetId;
- activeId=S.plan[0]||R[0]?.id||"";
- localStorage.setItem("gatherPlannerV1",JSON.stringify(S));
- const stamp=new Date().toISOString();localStorage.setItem(SYNC_LAST_KEY,stamp);localStorage.setItem(LOCAL_CHANGED_KEY,stamp);
- renderAll();
-}
-function confirmTestReset(action,localCount,remoteCount){
- return new Promise(resolve=>{
-  const overlay=document.createElement("div");
-  overlay.setAttribute("role","presentation");
-  overlay.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px";
-  const panel=document.createElement("div");
-  panel.setAttribute("role","dialog");panel.setAttribute("aria-modal","true");panel.setAttribute("aria-label","Confirm test reset");
-  panel.style.cssText="background:var(--card,#fff);color:var(--text,#222);padding:24px;border-radius:14px;max-width:480px;width:100%;box-shadow:0 20px 60px #0005";
-  panel.innerHTML=`<h2 style="margin-top:0">Confirm test reset</h2><p id="testResetAction"></p><p><strong>Local custom recipes:</strong> <span id="testResetLocal"></span><br><strong>Cloud custom recipes:</strong> <span id="testResetCloud"></span></p><p>This permanently removes test custom recipes. Verify backups from BOTH devices before proceeding.</p><label style="display:block;margin-bottom:8px">Type <strong>RESET</strong> to continue:</label><input id="testResetTyped" autocomplete="off" spellcheck="false" style="width:100%;padding:10px;margin-bottom:14px;border:1px solid #999;border-radius:6px"><div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="btn" id="testResetCancel">Cancel</button><button type="button" class="btn primary" id="testResetProceed" disabled>Delete test recipes</button></div>`;
-  overlay.appendChild(panel);document.body.appendChild(overlay);
-  panel.querySelector("#testResetAction").textContent=action;
-  panel.querySelector("#testResetLocal").textContent=String(localCount);
-  panel.querySelector("#testResetCloud").textContent=String(remoteCount);
-  const input=panel.querySelector("#testResetTyped"),proceed=panel.querySelector("#testResetProceed");
-  const finish=answer=>{document.removeEventListener("keydown",onKey);overlay.remove();resolve(answer)};
-  const onKey=e=>{if(e.key==="Escape"){e.preventDefault();finish(false)}};
-  document.addEventListener("keydown",onKey);
-  input.addEventListener("input",()=>{proceed.disabled=input.value!=="RESET"});
-  panel.querySelector("#testResetCancel").addEventListener("click",()=>finish(false));
-  proceed.addEventListener("click",()=>{if(input.value==="RESET")finish(true)});
-  input.focus();
- });
-}
-async function resetCloudAndDeviceForTest(){
- if(__gatherResetBusy)return;
- if(!window.__gatherSupabaseClient||!window.__gatherSyncUser){testResetMessage("Sign in to your Supabase account first.");return;}
- __gatherResetBusy=true;
- try{
-  testResetMessage("Checking cloud before reset…");
-  const row=await getCloudRow();
-  const remoteCount=Array.isArray(row?.payload?.customRecipes)?row.payload.customRecipes.length:0;
-  const localCount=R.filter(r=>r.custom===true).length;
-  if(!await confirmTestReset("Reset cloud and this device",localCount,remoteCount)){testResetMessage("Canceled; no data changed.");return;}
-  const id="test-reset-"+new Date().toISOString()+"-"+Math.random().toString(36).slice(2);
-  // Preserve the existing cloud preferences/plan, but remove references to deleted recipes.
-  const payload=row?.payload?JSON.parse(JSON.stringify(row.payload)):JSON.parse(gatherBackupPayload());
-  const deletedIds=new Set((payload.customRecipes||[]).map(r=>r.id));
-  payload.customRecipes=[];payload.recipeTombstones={};
-  payload.plan=(payload.plan||[]).filter(x=>!deletedIds.has(x));
-  payload.checked=[];payload.gatherTestResetId=id;
-  const {error}=await window.__gatherSupabaseClient.from("gather_user_data").upsert({user_id:window.__gatherSyncUser.id,payload,updated_at:new Date().toISOString()},{onConflict:"user_id"});
-  if(error)throw error;
-  const verify=await getCloudRow();
-  if(verify?.payload?.gatherTestResetId!==id||verify.payload.customRecipes?.length!==0)throw new Error("Cloud verification failed; local data was NOT cleared. Do not sync. Inspect cloud state.");
-  clearTestCustomRecipes(id);
-  testResetMessage("Cloud and this device verified empty of custom recipes. Open the other device and run Step 2 BEFORE syncing.");
-  syncStatus("Test reset completed. Reset the other device before syncing.","Reset complete");
- }catch(e){testResetMessage("Reset stopped: "+(e.message||String(e))+". Local recipes were not cleared unless completion was confirmed.")}
- finally{__gatherResetBusy=false;}
-}
-async function joinTestResetOnDevice(){
- if(__gatherResetBusy)return;
- if(!window.__gatherSupabaseClient||!window.__gatherSyncUser){testResetMessage("Sign in to the same Supabase account first.");return;}
- __gatherResetBusy=true;
- try{
-  const row=await getCloudRow();const id=row?.payload?.gatherTestResetId;
-  if(!id||!Array.isArray(row.payload.customRecipes)||row.payload.customRecipes.length){testResetMessage("Cloud is not in a verified empty test-reset state. Complete Step 1 on the first device.");return;}
-  const localCount=R.filter(r=>r.custom===true).length;
-  if(!await confirmTestReset("Clear this device to match the cloud test reset",localCount,0)){testResetMessage("Canceled; no data changed.");return;}
-  clearTestCustomRecipes(id);
-  testResetMessage("This device now matches the cloud test reset. You may begin one-recipe sync testing.");
-  syncStatus("Local test reset complete. Ready for recipe tests.","Reset complete");
- }catch(e){testResetMessage("Local reset failed: "+(e.message||String(e)))}
- finally{__gatherResetBusy=false;}
 }
 function queueCloudSync(){
  // v1.0.2 safety: do not automatically overwrite a full cloud dataset.
